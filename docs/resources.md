@@ -1,40 +1,33 @@
 # Полезные ресурсы
 
 ## Git и система контроля версий
+#### YouTube:
+[Git и GitHub для новичков](https://www.youtube.com/watch?v=EeARyFrZsnU)
+[Лучший Гайд по Git Для Начинающих За 15 Минут](https://www.youtube.com/watch?v=XuFaQSW79rM)
+[Git: курс](https://www.youtube.com/watch?v=W4hoc24K93E&list=PLDyvV36pndZFHXjXuwA_NywNrVQO0aQqb)
 
-- [Pro Git — официальная книга (рус.)](https://git-scm.com/book/ru/v2) — полное руководство по Git на русском языке.
-- [Курс по Git от Hexlet](https://ru.hexlet.io/courses/intro_to_git) — бесплатный интерактивный курс для начинающих.
-- [Документация GitVerse](https://gitverse.ru/docs/gitverse/) — официальная документация платформы.
-- [Visualizing Git](https://git-school.github.io/visualizing-git/) — интерактивная визуализация работы веток и коммитов.
-
+---
 ## Markdown
+#### GitHub Gist:
+[Руководство по оформлению Markdown файлов](https://gist.github.com/Jekins/2bf2d0638163f1294637)
 
-- [Markdown Guide](https://www.markdownguide.org/) — подробный справочник по синтаксису Markdown.
-- [Уроки по Markdown (Hexlet)](https://ru.hexlet.io/lesson_filters/markdown) — практические уроки.
-- [CommonMark Spec](https://commonmark.org/) — стандарт разметки Markdown.
-
+---
 ## Веб-технологии (HTML/CSS)
+#### Хабр:
+[Веб-разработка на ванильном HTML, CSS и JavaScript: стилизация и сайты](https://habr.com/ru/companies/ruvds/articles/910734/)
+#### YouTube:
+[Основы HTML для Начинающих (актуально в 2026)](https://www.youtube.com/watch?v=SKRydSA2bYA)
+[Курс для начинающих по верстке сайта с нуля на HTML, CSS, JavaScript](https://www.youtube.com/watch?v=JKlTjCQa_eY&list=PLDyJYA6aTY1lu4POV7O2M9UOwHOKBaaLs&pp=0gcJCbcEOCosWNin)
 
-- [MDN Web Docs — HTML](https://developer.mozilla.org/ru/docs/Web/HTML) — справочник по HTML на русском.
-- [MDN Web Docs — CSS](https://developer.mozilla.org/ru/docs/Web/CSS) — справочник по CSS.
-- [Дока](https://doka.guide/) — русскоязычный справочник по HTML, CSS и JavaScript.
-- [CSS-Tricks](https://css-tricks.com/) — статьи и примеры по CSS.
-
+---
 ## Криптография и информационная безопасность
+#### YouTube:
+[КРИПТОГРАФИЯ С НУЛЯ. НАЧАЛО](https://www.youtube.com/watch?v=7mn4uq4DBJo)
+[КАК РАБОТАЕТ ШИФРОВАНИЕ? С НУЛЯ ЗА ЧАС](https://www.youtube.com/watch?v=qgofSZFTuVc)
 
-- [CryptoHack](https://cryptohack.org/) — платформа для изучения криптографии через задачи (конкурент нашего проекта для продвинутых).
-- [Khan Academy — Cryptography](https://www.khanacademy.org/computing/computer-science/cryptography) — бесплатный курс по основам криптографии.
-- [Введение в криптографию (Stepik)](https://stepik.org/course/53760) — курс на русском языке.
-- [The Code Book — Simon Singh](https://simonsingh.net/books/the-code-book/) — книга об истории шифрования (на английском).
+---
+## LLM и промпт-инжиниринг
+#### YouTube:
+[Промпт-инжиниринг — навык, который теперь нужен всем. Разбираемся, как использовать LLM на практике](https://www.youtube.com/watch?v=BspDBzAmd0g)
 
-## Искусственный интеллект и LLM
-
-- [Hugging Face NLP Course](https://huggingface.co/learn/nlp-course) — бесплатный курс по обработке естественного языка.
-- [Курс «Нейронные сети» на Stepik](https://stepik.org/course/50352) — введение в нейронные сети на русском.
-- [Prompt Engineering Guide](https://www.promptingguide.ai/ru) — руководство по написанию промптов на русском.
-
-## Проект «Дешифратор»
-
-- **Куратор проекта:** Гулина И.В.
-- **Тимлид:** Шуткин И.К.
-- Проект выполняется в рамках дисциплины «Проектная деятельность», Московский Политехнический университет.
+---
