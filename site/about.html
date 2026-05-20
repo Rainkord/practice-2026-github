@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>О проекте — Дешифратор</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a0d00;color:#fdf6ea;min-height:100dvh;-webkit-font-smoothing:antialiased}
+:root{--orange:#e8720a;--amber:#f5a623;--dark:#1a0d00;--mid:#2b1500;--card:#3a1e05;--border:rgba(232,114,10,0.22);--muted:#c9a87c;--faint:#7a5c3a;--radius:12px}
+a{color:var(--amber);transition:color .2s}a:hover{color:var(--orange)}
+.container{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem}
+h1{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;color:var(--orange);margin-bottom:0.5rem}
+h2{font-size:1.25rem;font-weight:700;color:var(--orange);margin:1.8rem 0 0.65rem}
+h3{font-size:1rem;font-weight:700;color:var(--amber);margin:1rem 0 0.4rem}
+p{line-height:1.7;color:var(--muted);margin-bottom:0.65rem;max-width:68ch}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem 1.6rem;margin-bottom:1rem}
+.tag{display:inline-block;background:rgba(232,114,10,0.12);color:var(--amber);border:1px solid var(--border);border-radius:99px;padding:2px 12px;font-size:0.78rem;margin-right:0.3rem}
+ul{padding-left:1.2rem;color:var(--muted);line-height:1.8}
+li{margin-bottom:0.3rem}
+</style></head>
+<body>
+<nav style="background:#2b1500;border-bottom:1px solid rgba(232,114,10,0.22);padding:0.75rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+  <a href="index.html" style="color:#e8720a;font-weight:800;font-size:1.1rem;text-decoration:none;margin-right:1rem">🦊 Дешифратор</a>
+  <a href="index.html" style="color:#c9a87c;font-size:0.88rem;text-decoration:none;padding:4px 12px;border-radius:99px;border:1px solid rgba(232,114,10,0.22)">Главная</a>
+  <a href="about.html" style="color:#e8720a;font-size:0.88rem;text-decoration:none;padding:4px 12px;border-radius:99px;border:1px solid rgba(232,114,10,0.5)">О проекте</a>
+  <a href="members.html" style="color:#c9a87c;font-size:0.88rem;text-decoration:none;padding:4px 12px;border-radius:99px;border:1px solid rgba(232,114,10,0.22)">Участники</a>
+  <a href="journal.html" style="color:#c9a87c;font-size:0.88rem;text-decoration:none;padding:4px 12px;border-radius:99px;border:1px solid rgba(232,114,10,0.22)">Журнал</a>
+  <a href="resources.html" style="color:#c9a87c;font-size:0.88rem;text-decoration:none;padding:4px 12px;border-radius:99px;border:1px solid rgba(232,114,10,0.22)">Ресурсы</a>
+</nav>
+<div class="container">
+  <div style="display:flex;align-items:flex-start;gap:1.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
+    <div>
+      <h1>О проекте</h1>
+      <p style="color:#fdf6ea;font-size:1.05rem;margin-bottom:0">«Дешифратор для студентов и школьников»</p>
+      <p>Статический веб-сайт с обучающими материалами по классическим алгоритмам шифрования, разработанный в рамках учебной практики.</p>
+    </div>
+    <img src="assets/fox-smart.png" alt="Лисёнок" style="width:110px;filter:drop-shadow(0 4px 16px rgba(232,114,10,0.3));flex-shrink:0">
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Цель</h2>
+    <p>Создать полноценный статический веб-сайт, посвящённый классическим алгоритмам шифрования, доступный и понятный школьникам и студентам младших курсов, освоив при этом базовые навыки работы с Git, Markdown, HTML и CSS.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Задачи</h2>
+    <ul>
+      <li>Изучить основы Git и организовать работу через репозиторий.</li>
+      <li>Создать Markdown-документацию проекта.</li>
+      <li>Разработать статический веб-сайт на HTML/CSS с несколькими страницами по тематике дешифратора.</li>
+      <li>Ознакомиться с основами больших языковых моделей (LLM) и промпт-инжинирингу.</li>
+      <li>Посетить мероприятие, связанное с направлением обучения.</li>
+      <li>Оформить итоговый отчёт по практике.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Актуальность</h2>
+    <p>Современные школьники и студенты младших курсов недооценивают практическое применение математики и алгоритмики. Сайт демонстрирует алгоритмы шифрования в действии с понятными объяснениями, связывая теорию с практикой и побуждая интерес к кибербезопасности и программированию.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Что изучается</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.3rem">
+      <span class="tag">Код Морзе</span>
+      <span class="tag">Атбаш</span>
+      <span class="tag">Шифр Цезаря</span>
+      <span class="tag">Шифр Виженера</span>
+      <span class="tag">Шифр Вернама</span>
+    </div>
+    <p style="margin-top:0.75rem">Каждый шифр сопровождается историческими справками, подробным объяснением принципа работы и интерактивными заданиями с проверкой ответа.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Исторический контекст</h2>
+    <p>Первые шифры появились ещё в Древнем Египте около 1900 года до н.э. — писцы намеренно искажали иероглифы, чтобы скрыть смысл текста от посторонних. Шифрование прошло путь от простых подстановок до математически доказуемой стойкости (шифр Вернама) и легло в основу современной криптографии.</p>
+  </div>
+
+  <p style="color:var(--faint);font-size:0.82rem;margin-top:1.5rem">Учебная практика 2026 · Группа 251-372</p>
+</div>
+</body>
+</html>
