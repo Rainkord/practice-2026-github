@@ -1,1080 +1,1185 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Дешифратор</title>
+  <title>Дешифратор — Обучение криптографии</title>
   <link rel="preload" href="img/fox-normal.png"  as="image"/>
   <link rel="preload" href="img/fox-smart.png"   as="image"/>
   <link rel="preload" href="img/fox-explain.png" as="image"/>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ═══════════════════════════════════
+       RESET & DESIGN TOKENS
+    ═══════════════════════════════════ */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#000;--bg-section:#1d1d1f;--bg-elevated:#2d2d2f;
+      --card:rgba(255,255,255,.05);--card-hover:rgba(255,255,255,.08);
+      --border:rgba(255,255,255,.08);--border-hover:rgba(255,255,255,.18);
+      --text:#f5f5f7;--text-muted:#86868b;--text-dim:#6e6e73;
+      --accent:#E8720C;--accent-light:#F5A623;--accent-glow:rgba(232,114,12,.3);
+      --success:#30D158;--error:#FF453A;
+      --radius:18px;--radius-sm:12px;--radius-pill:980px;
+      --ease:cubic-bezier(.28,.11,.32,1);--ease-out:cubic-bezier(.16,1,.3,1);
+      --nav-h:52px;
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
+      background:var(--bg);color:var(--text);overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    }
+    .mono{font-family:'Source Code Pro',monospace}
+    .hidden{display:none!important}
 
-    :root {
-      --bg:        #FAF7F2;
-      --card:      #FFFFFF;
-      --orange:    #E8720C;
-      --amber:     #F5A623;
-      --brown:     #2C1A0E;
-      --text:      #3D3D3D;
-      --muted:     #7A7A7A;
-      --overlay:   rgba(44,26,14,0.55);
-      --radius:    18px;
-      --shadow:    0 4px 24px rgba(44,26,14,0.10);
+    /* ═══════════════════════════════════
+       FROSTED GLASS NAVIGATION
+    ═══════════════════════════════════ */
+    .nav-glass{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      height:var(--nav-h);
+      background:rgba(0,0,0,.72);
+      backdrop-filter:saturate(180%) blur(20px);
+      -webkit-backdrop-filter:saturate(180%) blur(20px);
+      border-bottom:1px solid var(--border);
+      transition:background .3s;
     }
+    .nav-inner{
+      max-width:1200px;margin:0 auto;height:100%;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 24px;
+    }
+    .nav-logo{
+      display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;
+    }
+    .nav-logo img{width:32px;height:32px;border-radius:50%}
+    .nav-logo span{font-size:.95rem;font-weight:700;color:var(--text);letter-spacing:-.02em}
+    .nav-links{display:flex;gap:28px}
+    .nav-link{
+      font-size:.82rem;font-weight:500;color:var(--text-muted);
+      text-decoration:none;cursor:pointer;transition:color .2s;
+      background:none;border:none;font-family:inherit;padding:0;
+      letter-spacing:-.01em;
+    }
+    .nav-link:hover,.nav-link.active{color:var(--text)}
 
-    body {
-      font-family: 'Nunito', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* ── УТИЛИТЫ ── */
-    .hidden  { display: none !important; }
-    .mono    { font-family: 'Source Code Pro', monospace; }
-    .screen  { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px; }
-
-    /* ══════════════════════════════════
-       ЭКРАН 1 — ГЛАВНЫЙ
-    ══════════════════════════════════ */
-    #screen-home {
-      background: radial-gradient(ellipse at 60% 40%, #fff3e8 0%, var(--bg) 70%);
-      text-align: center;
-      gap: 0;
-    }
-    .home-fox {
-      width: 220px;
-      filter: drop-shadow(0 8px 24px rgba(232,114,12,0.18));
-      animation: float 3s ease-in-out infinite;
-    }
-    @keyframes float {
-      0%,100% { transform: translateY(0); }
-      50%      { transform: translateY(-12px); }
-    }
-    .home-title {
-      font-size: clamp(2.4rem, 6vw, 4rem);
-      font-weight: 900;
-      color: var(--brown);
-      margin-top: 16px;
-      letter-spacing: -1px;
-    }
-    .home-title span { color: var(--orange); }
-    .home-sub {
-      font-size: 1.1rem;
-      color: var(--muted);
-      margin-top: 8px;
-      margin-bottom: 36px;
-    }
-    .btn-primary {
-      background: var(--orange);
-      color: #fff;
-      border: none;
-      border-radius: 50px;
-      padding: 16px 52px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 1.2rem;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 6px 20px rgba(232,114,12,0.35);
-      transition: transform .15s, box-shadow .15s;
-    }
-    .btn-primary:hover  { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(232,114,12,0.40); }
-    .btn-primary:active { transform: translateY(0);    box-shadow: 0 4px 14px rgba(232,114,12,0.30); }
-
-    /* ══════════════════════════════════
-       МАСКОТ-ДИАЛОГ (оверлей)
-    ══════════════════════════════════ */
-    #mascot-overlay {
-      position: fixed; inset: 0;
-      background: var(--overlay);
-      z-index: 100;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      overflow: hidden;
-      animation: fadeIn .3s ease;
-    }
-    @keyframes fadeIn  { from { opacity:0 } to { opacity:1 } }
-    @keyframes fadeOut { from { opacity:1 } to { opacity:0 } }
-
-    /* Общий контейнер — центрирован, лис справа, облачко слева */
-    .mascot-dialog {
-      display: flex;
-      flex-direction: row;
-      align-items: flex-end;
-      justify-content: center;
-      width: 100%;
-      max-width: 960px;
-      padding: 0 24px;
-      gap: 24px;
+    .nav-hamburger{
+      display:none;background:none;border:none;color:var(--text);
+      font-size:1.3rem;cursor:pointer;padding:8px;
     }
 
-    /* Облачко — слева от лиса, выровнено по верху лисьей головы */
-    .mascot-bubble {
-      position: relative;
-      background: #fff;
-      border-radius: 22px;
-      padding: 24px 28px 20px;
-      box-shadow: 0 8px 40px rgba(44,26,14,0.22);
-      width: 34vw;
-      max-width: 340px;
-      min-width: 220px;
-      flex-shrink: 0;
-      margin-bottom: 28vh;
-      animation: bubbleIn .4s .1s cubic-bezier(.34,1.56,.64,1) both;
-      z-index: 2;
+    /* Mobile menu overlay */
+    .mobile-overlay{
+      position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.92);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+      opacity:0;pointer-events:none;transition:opacity .3s;
     }
-    @keyframes bubbleIn {
-      from { transform: scale(0.85) translateX(-20px); opacity:0 }
-      to   { transform: scale(1)    translateX(0);     opacity:1 }
+    .mobile-overlay.open{opacity:1;pointer-events:all}
+    .mobile-overlay .mob-link{
+      font-size:1.6rem;font-weight:600;color:var(--text);
+      background:none;border:none;font-family:inherit;cursor:pointer;
+      letter-spacing:-.02em;transition:color .2s;
     }
-    /* Хвостик — справа от облачка, к морде лиса */
-    .mascot-bubble::after {
-      content: '';
-      position: absolute;
-      right: -18px;
-      bottom: 24px;
-      border: 10px solid transparent;
-      border-left-color: #fff;
-      border-right: none;
-    }
-    .mascot-bubble p {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--brown);
-      line-height: 1.65;
-    }
-    .mascot-bubble .hint {
-      font-size: 0.83rem;
-      font-style: italic;
-      color: var(--muted);
-      margin-top: 10px;
-      display: block;
-      border-left: 3px solid var(--amber);
-      padding-left: 12px;
-      line-height: 1.55;
-    }
-    .bubble-next {
-      margin-top: 16px;
-      background: var(--orange);
-      color: #fff;
-      border: none;
-      border-radius: 50px;
-      padding: 10px 30px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .15s;
-    }
-    .bubble-next:hover { background: #cf6409; }
-
-    /* Лис — справа, 2/3 высоты экрана, ноги чуть под экран */
-    .mascot-img {
-      height: 80vh;
-      width: auto;
-      flex-shrink: 0;
-      margin-bottom: -6vh;
-      filter: drop-shadow(0 0 40px rgba(232,114,12,0.18));
-      animation: foxIn .45s cubic-bezier(.34,1.56,.64,1);
-    }
-    @keyframes foxIn {
-      from { transform: translateX(60px) scale(0.85); opacity:0 }
-      to   { transform: translateX(0)    scale(1);    opacity:1 }
+    .mobile-overlay .mob-link:hover{color:var(--accent)}
+    .mob-close{
+      position:absolute;top:16px;right:20px;
+      background:none;border:none;color:var(--text);font-size:1.6rem;cursor:pointer;
     }
 
-    /* ══════════════════════════════════
-       ЭКРАН 2 — МЕНЮ ШИФРОВ
-    ══════════════════════════════════ */
-    #screen-menu {
-      justify-content: flex-start;
-      padding-top: 48px;
-      padding-bottom: 48px;
-    }
-    .menu-header {
-      text-align: center;
-      margin-bottom: 36px;
-    }
-    .menu-header h1 {
-      font-size: 2.2rem;
-      font-weight: 900;
-      color: var(--brown);
-    }
-    .menu-header p {
-      color: var(--muted);
-      margin-top: 6px;
-      font-size: 1rem;
-    }
-    .ciphers-list {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      width: 100%;
-      max-width: 560px;
-    }
-    .cipher-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      border: 2px solid transparent;
-      transition: border-color .2s, transform .15s;
-    }
-    .cipher-card:hover { border-color: var(--orange); transform: translateY(-2px); }
-
-    .cipher-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 22px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .cipher-name {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .cipher-num {
-      width: 34px; height: 34px;
-      background: var(--orange);
-      color: #fff;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800;
-      font-size: 0.95rem;
-      flex-shrink: 0;
-    }
-    .cipher-title { font-size: 1.1rem; font-weight: 700; color: var(--brown); }
-    .cipher-dots  { display: flex; gap: 6px; }
-    .dot {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      background: #E0D8D0;
-    }
-    .dot.green  { background: #4CAF50; }
-    .dot.yellow { background: var(--amber); }
-    .dot.red    { background: #E53935; }
-
-    /* Выпадающее меню глав */
-    .cipher-chapters {
-      border-top: 1px solid #F0EAE2;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .chapter-btn {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--bg);
-      border: none;
-      border-radius: 10px;
-      padding: 12px 16px;
-      cursor: pointer;
-      font-family: 'Nunito', sans-serif;
-      font-size: 0.97rem;
-      font-weight: 600;
-      color: var(--text);
-      transition: background .15s;
-      text-align: left;
-    }
-    .chapter-btn:hover { background: #F0EAE2; }
-    .chapter-btn .ch-left { display: flex; align-items: center; gap: 10px; }
-    .chapter-icon { font-size: 1.1rem; }
-    .ch-dots { display: flex; gap: 5px; }
-    .ch-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #E0D8D0;
-    }
-    .ch-dot.filled-g { background: #4CAF50; }
-    .ch-dot.filled-y { background: var(--amber); }
-    .ch-dot.filled-r { background: #E53935; }
-
-    /* ══════════════════════════════════
-       ЭКРАН 3 — ПРОЛОГ / ЗАДАНИЕ
-    ══════════════════════════════════ */
-    #screen-chapter {
-      justify-content: flex-start;
-      padding-top: 0;
-    }
-    .chapter-topbar {
-      width: 100%;
-      background: var(--card);
-      border-bottom: 1px solid #F0EAE2;
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .back-btn {
-      background: none;
-      border: none;
-      font-size: 1.4rem;
-      cursor: pointer;
-      color: var(--brown);
-      padding: 2px 6px;
-      border-radius: 8px;
-      transition: background .15s;
-    }
-    .back-btn:hover { background: #F0EAE2; }
-    .topbar-info { flex: 1; }
-    .topbar-cipher { font-size: 0.8rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
-    .topbar-chapter { font-size: 1rem; font-weight: 700; color: var(--brown); }
-
-    .chapter-content {
-      width: 100%;
-      max-width: 700px;
-      padding: 32px 16px 100px;
+    @media(max-width:768px){
+      .nav-links{display:none}
+      .nav-hamburger{display:block}
     }
 
-    /* Карточка с затемнением → появление */
-    .content-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 28px 32px;
-      margin-bottom: 20px;
-      opacity: 0;
-      transform: translateY(16px);
-      transition: opacity .5s ease, transform .5s ease;
+    /* ═══════════════════════════════════
+       HERO SECTION
+    ═══════════════════════════════════ */
+    .hero{
+      position:relative;min-height:100vh;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      text-align:center;padding:120px 24px 80px;overflow:hidden;
     }
-    .content-card.visible {
-      opacity: 1;
-      transform: translateY(0);
+    .hero-bg{
+      position:absolute;inset:0;
+      background:radial-gradient(ellipse at 50% 20%,rgba(232,114,12,.12) 0%,transparent 60%);
+      pointer-events:none;
     }
-    .content-card h2 {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--brown);
-      margin-bottom: 14px;
+    .hero-grid{
+      position:absolute;inset:0;
+      background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.03) 1px,transparent 0);
+      background-size:48px 48px;pointer-events:none;
     }
-    .content-card p {
-      font-size: 1rem;
-      line-height: 1.7;
-      color: var(--text);
-      margin-bottom: 10px;
+    .hero-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center}
+    .hero-title{
+      font-size:clamp(3.2rem,9vw,7rem);font-weight:800;
+      letter-spacing:-.04em;line-height:1.05;
+      background:linear-gradient(135deg,var(--accent),var(--accent-light));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
     }
-    .history-note {
-      font-style: italic;
-      font-size: 0.88rem;
-      color: var(--muted);
-      border-left: 3px solid var(--amber);
-      padding-left: 14px;
-      margin-top: 16px;
-      line-height: 1.6;
+    .hero-sub{
+      font-size:clamp(1rem,2.2vw,1.5rem);font-weight:400;
+      color:var(--text-muted);margin-top:16px;max-width:540px;
+      letter-spacing:-.01em;line-height:1.4;
+    }
+    .hero-stats{
+      display:flex;gap:16px;margin-top:40px;flex-wrap:wrap;justify-content:center;
+    }
+    .stat-card{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+      padding:20px 28px;text-align:center;min-width:120px;
+    }
+    .stat-card .stat-num{
+      font-size:1.8rem;font-weight:800;color:var(--text);
+      letter-spacing:-.03em;display:block;
+    }
+    .stat-card .stat-label{
+      font-size:.78rem;font-weight:500;color:var(--text-muted);
+      margin-top:4px;letter-spacing:.02em;text-transform:uppercase;
+    }
+    .hero-cta{display:flex;gap:16px;margin-top:40px;flex-wrap:wrap;justify-content:center}
+    .btn-pill{
+      border-radius:var(--radius-pill);padding:14px 36px;
+      font-family:inherit;font-size:1rem;font-weight:600;
+      cursor:pointer;transition:all .25s var(--ease);border:none;
+      letter-spacing:-.01em;
+    }
+    .btn-accent{
+      background:var(--accent);color:#fff;
+      box-shadow:0 4px 24px var(--accent-glow);
+    }
+    .btn-accent:hover{transform:scale(1.04);box-shadow:0 8px 32px var(--accent-glow)}
+    .btn-ghost{
+      background:transparent;color:var(--accent);border:1px solid var(--accent);
+    }
+    .btn-ghost:hover{background:rgba(232,114,12,.1)}
+
+    .hero-fox{
+      position:relative;z-index:2;
+      width:clamp(140px,20vw,220px);margin-top:48px;
+      filter:drop-shadow(0 0 60px rgba(232,114,12,.25));
+      animation:heroFloat 4s ease-in-out infinite;
+    }
+    @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+
+    .scroll-hint{
+      position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+      color:var(--text-dim);font-size:1.2rem;animation:scrollBounce 2s ease-in-out infinite;
+    }
+    @keyframes scrollBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+    /* ═══════════════════════════════════
+       DOCUMENTATION SECTIONS
+    ═══════════════════════════════════ */
+    .section{
+      padding:120px 24px;position:relative;
+    }
+    .section-inner{max-width:980px;margin:0 auto}
+    .section-label{
+      font-size:.75rem;font-weight:600;text-transform:uppercase;
+      letter-spacing:.08em;color:var(--accent);margin-bottom:8px;
+    }
+    .section-title{
+      font-size:clamp(2rem,5vw,3.5rem);font-weight:700;
+      letter-spacing:-.03em;line-height:1.1;margin-bottom:12px;
+    }
+    .section-sub{
+      font-size:1.1rem;color:var(--text-muted);line-height:1.5;
+      max-width:600px;margin-bottom:48px;letter-spacing:-.01em;
+    }
+    .section-divider{
+      height:1px;
+      background:linear-gradient(90deg,transparent,var(--border),transparent);
     }
 
-    /* Задание */
-    .task-label {
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--orange);
-      margin-bottom: 8px;
+    /* Glass cards */
+    .glass{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:32px;
+      transition:all .3s var(--ease);
     }
-    .task-text {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--brown);
-      margin-bottom: 16px;
+    .glass:hover{background:var(--card-hover);border-color:var(--border-hover)}
+    .glass h3{
+      font-size:1.2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:12px;
     }
-    .task-input {
-      font-family: 'Source Code Pro', monospace;
-      font-size: 1.1rem;
-      border: 2px solid #E0D8D0;
-      border-radius: 12px;
-      padding: 12px 18px;
-      width: 100%;
-      outline: none;
-      transition: border-color .2s;
-      background: var(--bg);
-      color: var(--brown);
-      text-transform: uppercase;
-    }
-    .task-input:focus { border-color: var(--orange); }
-    .task-input.correct { border-color: #4CAF50; background: #F1FBF1; }
-    .task-input.wrong   { border-color: #E53935; background: #FFF1F1; }
+    .glass p{font-size:.95rem;color:var(--text-muted);line-height:1.65}
 
-    .check-btn {
-      margin-top: 14px;
-      background: var(--orange);
-      color: #fff;
-      border: none;
-      border-radius: 50px;
-      padding: 12px 36px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .15s;
+    .card-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;
     }
-    .check-btn:hover { background: #cf6409; }
-
-    .feedback {
-      margin-top: 12px;
-      font-size: 0.97rem;
-      font-weight: 600;
-      min-height: 22px;
-    }
-    .feedback.ok  { color: #4CAF50; }
-    .feedback.err { color: #E53935; }
-
-    /* Таблица Морзе / Вернам */
-    .ref-table-wrap {
-      width: 100%;
-      overflow-x: auto;
-      margin-top: 12px;
-      border-radius: 8px;
-    }
-    .ref-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: 'Source Code Pro', monospace;
-      font-size: 0.82rem;
-      min-width: 400px;
-    }
-    .ref-table td, .ref-table th {
-      border: 1px solid #F0EAE2;
-      padding: 6px 10px;
-      text-align: center;
-    }
-    .ref-table th {
-      background: #FFF3E8;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      color: var(--brown);
+    .card-grid-2{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;
     }
 
-    /* Кнопка «Далее» */
-    .next-btn {
-      margin-top: 24px;
-      background: var(--brown);
-      color: #fff;
-      border: none;
-      border-radius: 50px;
-      padding: 14px 44px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 1.05rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .15s;
+    /* Scroll reveal */
+    .reveal{
+      opacity:0;transform:translateY(40px);
+      transition:opacity .8s var(--ease),transform .8s var(--ease);
     }
-    .next-btn:hover { background: #4a2e1a; }
+    .reveal.revealed{opacity:1;transform:translateY(0)}
+    .reveal-d1{transition-delay:.1s}
+    .reveal-d2{transition-delay:.2s}
+    .reveal-d3{transition-delay:.3s}
 
-    /* Кнопка маскота в углу */
-    #mascot-hint-btn {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 68px;
-      height: 68px;
-      background: var(--card);
-      border: none;
-      border-radius: 50%;
-      box-shadow: 0 4px 20px rgba(44,26,14,0.18);
-      cursor: pointer;
-      padding: 6px;
-      z-index: 50;
-      transition: transform .2s;
+    /* ═══ ABOUT ═══ */
+    .about-highlight{
+      display:inline-block;
+      background:linear-gradient(135deg,var(--accent),var(--accent-light));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;font-weight:700;
     }
-    #mascot-hint-btn:hover { transform: scale(1.1); }
-    #mascot-hint-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
 
-    /* ══════════════════════════════════
-       ФИНАЛЬНЫЙ ЭКРАН
-    ══════════════════════════════════ */
-    #screen-final {
-      text-align: center;
-      gap: 20px;
-      background: radial-gradient(ellipse at 50% 30%, #fff3e8 0%, var(--bg) 70%);
+    /* ═══ MEMBERS ═══ */
+    .member-block{display:flex;gap:32px;align-items:flex-start}
+    .member-avatar{
+      width:100px;height:100px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,var(--accent),var(--accent-light));
+      display:flex;align-items:center;justify-content:center;font-size:2.4rem;
+      box-shadow:0 0 40px var(--accent-glow);
     }
-    .final-fox {
-      width: 180px;
-      filter: drop-shadow(0 8px 24px rgba(232,114,12,0.20));
-      animation: float 3s ease-in-out infinite;
+    .member-name{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+    .member-meta{color:var(--text-muted);font-size:.9rem;margin-bottom:20px}
+    .info-table{width:100%;border-collapse:collapse;max-width:420px}
+    .info-table td{padding:10px 0;border-bottom:1px solid var(--border);font-size:.92rem}
+    .info-table td:first-child{color:var(--text-muted);width:150px;font-weight:500}
+
+    .contrib-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:24px}
+    .contrib-item{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);
+      padding:16px 20px;font-size:.92rem;font-weight:500;color:var(--text);
+      display:flex;align-items:flex-start;gap:10px;
     }
-    #screen-final h1 {
-      font-size: 2rem;
-      font-weight: 900;
-      color: var(--brown);
+    .contrib-icon{color:var(--accent);flex-shrink:0;margin-top:1px}
+
+    @media(max-width:600px){.member-block{flex-direction:column;align-items:center;text-align:center}}
+
+    /* ═══ JOURNAL ═══ */
+    .timeline{position:relative;padding-left:40px;margin-top:8px}
+    .timeline::before{
+      content:'';position:absolute;left:15px;top:0;bottom:0;
+      width:1px;background:linear-gradient(to bottom,var(--accent),var(--border));
     }
-    #screen-final p {
-      color: var(--muted);
-      max-width: 420px;
-      line-height: 1.6;
+    .tl-item{position:relative;margin-bottom:36px}
+    .tl-dot{
+      position:absolute;left:-40px;top:6px;width:12px;height:12px;
+      border-radius:50%;background:var(--accent);
+      box-shadow:0 0 16px var(--accent-glow);
     }
-    .final-list {
-      list-style: none;
-      text-align: left;
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 20px 28px;
-      box-shadow: var(--shadow);
-      max-width: 400px;
-      width: 100%;
+    .tl-date{font-size:.82rem;font-weight:600;color:var(--accent);margin-bottom:8px;letter-spacing:.02em}
+    .tl-card{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+      padding:24px;
     }
-    .final-list li {
-      padding: 8px 0;
-      border-bottom: 1px solid #F0EAE2;
-      font-weight: 600;
-      color: var(--brown);
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .tl-card h3{font-size:1.05rem;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+    .tl-card p{font-size:.92rem;color:var(--text-muted);line-height:1.65}
+
+    /* ═══ RESOURCES ═══ */
+    .res-category{margin-bottom:36px}
+    .res-cat-title{
+      font-size:1rem;font-weight:700;letter-spacing:-.01em;
+      margin-bottom:16px;padding-bottom:10px;
+      border-bottom:1px solid var(--border);
     }
-    .final-list li:last-child { border-bottom: none; }
-    .final-list .check { color: #4CAF50; font-size: 1.1rem; }
+    .res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+    .res-link{
+      display:flex;align-items:center;gap:14px;
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);
+      padding:14px 18px;text-decoration:none;color:var(--text);
+      font-size:.9rem;font-weight:500;transition:all .25s var(--ease);
+    }
+    .res-link:hover{background:var(--card-hover);border-color:var(--border-hover);transform:translateY(-1px)}
+    .res-icon{font-size:.9rem;width:24px;text-align:center;flex-shrink:0;color:var(--accent)}
+    .res-source{margin-left:auto;font-size:.72rem;color:var(--text-dim);font-weight:400;flex-shrink:0}
+
+    /* ═══ FOOTER ═══ */
+    .site-footer{
+      padding:48px 24px;text-align:center;
+      border-top:1px solid var(--border);
+    }
+    .site-footer p{font-size:.82rem;color:var(--text-dim);line-height:1.6}
+
+    /* ═══════════════════════════════════
+       LEARNING VIEW
+    ═══════════════════════════════════ */
+    #learning-view{
+      min-height:100vh;padding:calc(var(--nav-h) + 32px) 24px 80px;
+    }
+    .learn-inner{max-width:680px;margin:0 auto}
+    .learn-topbar{
+      display:flex;align-items:center;gap:16px;margin-bottom:24px;
+    }
+    .learn-back{
+      background:none;border:none;font-size:.9rem;font-weight:600;
+      color:var(--accent);cursor:pointer;font-family:inherit;
+      transition:opacity .2s;
+    }
+    .learn-back:hover{opacity:.7}
+
+    /* Progress */
+    .progress-wrap{
+      background:rgba(255,255,255,.08);border-radius:var(--radius-pill);
+      height:6px;overflow:hidden;margin-bottom:6px;
+    }
+    .progress-fill{
+      height:100%;border-radius:var(--radius-pill);
+      background:linear-gradient(90deg,var(--accent),var(--accent-light));
+      width:0%;transition:width .6s var(--ease-out);
+    }
+    .progress-label{font-size:.75rem;color:var(--text-dim);text-align:right;font-weight:500;margin-bottom:32px}
+
+    /* Cipher menu */
+    .cipher-menu-title{
+      font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;
+      letter-spacing:-.03em;margin-bottom:8px;
+    }
+    .cipher-menu-sub{color:var(--text-muted);font-size:.95rem;margin-bottom:28px}
+    .c-list{display:flex;flex-direction:column;gap:10px}
+    .c-card{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+      overflow:hidden;transition:all .25s var(--ease);cursor:pointer;
+    }
+    .c-card:hover{border-color:var(--border-hover);background:var(--card-hover)}
+    .c-head{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:20px 24px;
+    }
+    .c-head-left{display:flex;align-items:center;gap:16px}
+    .c-num{
+      width:36px;height:36px;border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--accent-light));
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0;
+    }
+    .c-title{font-size:1.05rem;font-weight:600;letter-spacing:-.01em}
+    .c-desc{font-size:.82rem;color:var(--text-dim);margin-top:2px}
+    .c-status{font-size:.82rem;color:var(--success);font-weight:600}
+    .c-chevron{
+      color:var(--text-dim);font-size:.8rem;transition:transform .25s var(--ease);
+    }
+    .c-card.open .c-chevron{transform:rotate(90deg)}
+
+    .c-chapters{
+      border-top:1px solid var(--border);padding:8px 12px;
+      display:flex;flex-direction:column;gap:4px;
+      max-height:0;overflow:hidden;transition:max-height .35s var(--ease);
+    }
+    .c-card.open .c-chapters{max-height:400px}
+    .ch-btn{
+      display:flex;align-items:center;justify-content:space-between;
+      background:transparent;border:none;border-radius:var(--radius-sm);
+      padding:12px 16px;cursor:pointer;font-family:inherit;
+      font-size:.9rem;font-weight:500;color:var(--text);
+      transition:background .15s;text-align:left;width:100%;
+    }
+    .ch-btn:hover{background:rgba(255,255,255,.04)}
+    .ch-done{color:var(--success);font-size:.9rem;font-weight:700}
+
+    /* Chapter view */
+    .ch-topbar{
+      display:flex;align-items:center;gap:12px;
+      padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:24px;
+    }
+    .ch-back{
+      background:none;border:none;font-size:1.3rem;cursor:pointer;
+      color:var(--text);padding:4px 8px;border-radius:8px;transition:background .15s;
+    }
+    .ch-back:hover{background:rgba(255,255,255,.06)}
+    .ch-info-cipher{font-size:.72rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+    .ch-info-title{font-size:1rem;font-weight:700;letter-spacing:-.01em}
+
+    .content-card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:32px;margin-bottom:16px;
+      opacity:0;transform:translateY(20px);
+      transition:opacity .5s var(--ease),transform .5s var(--ease);
+    }
+    .content-card.visible{opacity:1;transform:translateY(0)}
+    .content-card h2{
+      font-size:1.4rem;font-weight:700;letter-spacing:-.02em;margin-bottom:16px;
+    }
+    .content-card p{
+      font-size:.95rem;line-height:1.75;color:var(--text-muted);margin-bottom:12px;
+    }
+    .history-note{
+      font-style:italic;font-size:.85rem;color:var(--text-dim);
+      border-left:2px solid var(--accent);padding-left:16px;margin-top:20px;line-height:1.6;
+    }
+
+    /* Task */
+    .task-label{
+      font-size:.72rem;font-weight:600;text-transform:uppercase;
+      letter-spacing:.1em;color:var(--accent);margin-bottom:10px;
+    }
+    .task-text{font-size:1.05rem;font-weight:600;margin-bottom:20px;line-height:1.5}
+    .task-input{
+      width:100%;background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);border-radius:var(--radius-sm);
+      padding:14px 20px;color:var(--text);font-size:1.1rem;
+      font-family:'Source Code Pro',monospace;text-transform:uppercase;
+      outline:none;transition:all .25s var(--ease);
+    }
+    .task-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,114,12,.15)}
+    .task-input.correct{border-color:var(--success);background:rgba(48,209,88,.08)}
+    .task-input.wrong{border-color:var(--error);background:rgba(255,69,58,.08)}
+    .task-input::placeholder{color:var(--text-dim);text-transform:none}
+
+    .btn-check{
+      margin-top:16px;background:var(--accent);color:#fff;border:none;
+      border-radius:var(--radius-pill);padding:12px 36px;
+      font-family:inherit;font-size:.95rem;font-weight:600;
+      cursor:pointer;transition:all .25s var(--ease);
+    }
+    .btn-check:hover{transform:scale(1.03);box-shadow:0 4px 20px var(--accent-glow)}
+    .feedback{margin-top:12px;font-size:.92rem;font-weight:600;min-height:22px}
+    .feedback.ok{color:var(--success)}
+    .feedback.err{color:var(--error)}
+
+    .btn-next{
+      margin-top:24px;background:rgba(255,255,255,.08);color:var(--text);
+      border:1px solid var(--border);border-radius:var(--radius-pill);
+      padding:14px 40px;font-family:inherit;font-size:1rem;font-weight:600;
+      cursor:pointer;transition:all .25s var(--ease);
+    }
+    .btn-next:hover{background:rgba(255,255,255,.12);border-color:var(--border-hover)}
+
+    /* Ref tables */
+    .ref-table-wrap{width:100%;overflow-x:auto;margin:12px 0;border-radius:8px}
+    .ref-table{
+      width:100%;border-collapse:collapse;
+      font-family:'Source Code Pro',monospace;font-size:.78rem;min-width:400px;
+    }
+    .ref-table td,.ref-table th{
+      border:1px solid rgba(255,255,255,.08);padding:6px 10px;text-align:center;
+    }
+    .ref-table th{
+      background:rgba(255,255,255,.06);font-family:inherit;
+      font-weight:600;font-size:.78rem;
+    }
+    .ref-label{font-weight:600;margin:16px 0 6px;color:var(--text);font-size:.9rem}
+
+    /* Hint button */
+    #hint-btn{
+      position:fixed;bottom:24px;right:24px;width:60px;height:60px;
+      background:var(--card);border:1px solid var(--border);border-radius:50%;
+      cursor:pointer;padding:6px;z-index:50;transition:all .25s var(--ease);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    }
+    #hint-btn:hover{transform:scale(1.1);border-color:var(--border-hover)}
+    #hint-btn img{width:100%;height:100%;object-fit:contain;border-radius:50%}
+
+    /* ═══════════════════════════════════
+       MASCOT OVERLAY
+    ═══════════════════════════════════ */
+    #mascot-overlay{
+      position:fixed;inset:0;z-index:200;
+      background:rgba(0,0,0,.75);
+      backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+      display:flex;align-items:flex-end;justify-content:center;
+      animation:fadeIn .3s var(--ease);
+    }
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .mascot-dialog{
+      display:flex;align-items:flex-end;justify-content:center;
+      width:100%;max-width:900px;padding:0 24px;gap:20px;
+    }
+    .mascot-bubble{
+      position:relative;
+      background:rgba(255,255,255,.08);
+      backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+      border:1px solid rgba(255,255,255,.12);border-radius:24px;
+      padding:28px 32px 24px;width:36vw;max-width:360px;min-width:220px;
+      flex-shrink:0;margin-bottom:26vh;
+      animation:bubbleIn .4s .1s var(--ease-out) both;z-index:2;
+    }
+    @keyframes bubbleIn{from{transform:scale(.9) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+    .mascot-bubble::after{
+      content:'';position:absolute;right:-14px;bottom:28px;
+      border:8px solid transparent;border-left-color:rgba(255,255,255,.08);border-right:none;
+    }
+    .mascot-bubble p{font-size:1rem;font-weight:500;line-height:1.65;letter-spacing:-.01em}
+    .mascot-bubble .hint{
+      font-size:.8rem;font-style:italic;color:var(--text-muted);
+      margin-top:12px;display:block;border-left:2px solid var(--accent);
+      padding-left:14px;line-height:1.55;
+    }
+    .bubble-btn{
+      margin-top:18px;background:var(--accent);color:#fff;border:none;
+      border-radius:var(--radius-pill);padding:10px 28px;
+      font-family:inherit;font-size:.9rem;font-weight:600;
+      cursor:pointer;transition:all .2s;letter-spacing:-.01em;
+    }
+    .bubble-btn:hover{transform:scale(1.03)}
+    .mascot-fox{
+      height:75vh;width:auto;flex-shrink:0;margin-bottom:-4vh;
+      filter:drop-shadow(0 0 40px rgba(232,114,12,.2));
+      animation:foxIn .45s var(--ease-out);
+    }
+    @keyframes foxIn{from{transform:translateX(50px) scale(.9);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}
+
+    @media(max-width:768px){
+      .mascot-dialog{flex-direction:column-reverse;align-items:center}
+      .mascot-bubble{width:92vw;max-width:none;margin-bottom:12px}
+      .mascot-fox{height:35vh;margin-bottom:0}
+    }
+
+    /* ═══════════════════════════════════
+       FINAL / CONFETTI
+    ═══════════════════════════════════ */
+    .final-wrap{text-align:center;padding:48px 0}
+    .final-fox{width:140px;filter:drop-shadow(0 0 40px rgba(232,114,12,.25));animation:heroFloat 3s ease-in-out infinite}
+    .final-wrap h1{
+      font-size:2.4rem;font-weight:800;letter-spacing:-.03em;
+      margin:20px 0 8px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-light));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    .final-wrap>p{color:var(--text-muted);max-width:440px;margin:0 auto 28px;line-height:1.6}
+    .final-list{
+      list-style:none;text-align:left;max-width:400px;margin:0 auto 32px;
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 28px;
+    }
+    .final-list li{
+      padding:8px 0;border-bottom:1px solid var(--border);
+      font-weight:500;display:flex;align-items:center;gap:10px;font-size:.95rem;
+    }
+    .final-list li:last-child{border-bottom:none}
+    .final-list .chk{color:var(--success);font-size:1rem}
+
+    .confetti{
+      position:fixed;z-index:300;pointer-events:none;
+      animation:confettiFall linear forwards;
+    }
+    @keyframes confettiFall{
+      0%{transform:translateY(-10vh) rotate(0);opacity:1}
+      100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+    }
   </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════
-     ЭКРАН 1 — ГЛАВНЫЙ
-══════════════════════════════════ -->
-<div id="screen-home" class="screen">
-  <img src="img/fox-normal.png" class="home-fox" alt="Лисёнок"/>
-  <h1 class="home-title">Де<span>шифра</span>тор</h1>
-  <p class="home-sub">Познакомься с миром криптографии — просто и интересно</p>
-  <button class="btn-primary" onclick="startIntro()">Начать</button>
-</div>
-
-<!-- ══════════════════════════════════
-     ЭКРАН 2 — МЕНЮ ШИФРОВ
-══════════════════════════════════ -->
-<div id="screen-menu" class="screen hidden">
-  <div class="menu-header">
-    <h1>Выбери шифр</h1>
-    <p>Шифры расположены по сложности — рекомендуем идти по порядку</p>
+<!-- ═══ FROSTED GLASS NAV ═══ -->
+<nav class="nav-glass" id="nav">
+  <div class="nav-inner">
+    <div class="nav-logo" onclick="scrollToSec('home')">
+      <img src="img/fox-normal.png" alt=""/>
+      <span>Дешифратор</span>
+    </div>
+    <div class="nav-links" id="nav-links">
+      <button class="nav-link active" data-sec="home" onclick="navTo('home')">Главная</button>
+      <button class="nav-link" data-sec="about" onclick="navTo('about')">О проекте</button>
+      <button class="nav-link" data-sec="members" onclick="navTo('members')">Участники</button>
+      <button class="nav-link" data-sec="journal" onclick="navTo('journal')">Журнал</button>
+      <button class="nav-link" data-sec="resources" onclick="navTo('resources')">Ресурсы</button>
+    </div>
+    <button class="nav-hamburger" id="hamburger">☰</button>
   </div>
-  <div class="ciphers-list" id="ciphers-list"></div>
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-overlay" id="mobile-menu">
+  <button class="mob-close" onclick="closeMobile()">✕</button>
+  <button class="mob-link" onclick="navTo('home')">Главная</button>
+  <button class="mob-link" onclick="navTo('about')">О проекте</button>
+  <button class="mob-link" onclick="navTo('members')">Участники</button>
+  <button class="mob-link" onclick="navTo('journal')">Журнал</button>
+  <button class="mob-link" onclick="navTo('resources')">Ресурсы</button>
 </div>
 
-<!-- ══════════════════════════════════
-     ЭКРАН 3 — ГЛАВА (ПРОЛОГ / ЗАДАНИЕ)
-══════════════════════════════════ -->
-<div id="screen-chapter" class="screen hidden">
-  <div class="chapter-topbar">
-    <button class="back-btn" onclick="goToMenu()">←</button>
-    <div class="topbar-info">
-      <div class="topbar-cipher" id="topbar-cipher">Код Морзе</div>
-      <div class="topbar-chapter" id="topbar-chapter">Пролог</div>
+<!-- ═══ MAIN VIEW ═══ -->
+<div id="main-view">
+
+  <!-- HERO -->
+  <section id="sec-home" class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Дешифратор</h1>
+      <p class="hero-sub">Интерактивный обучающий сайт по классическим алгоритмам шифрования</p>
+      <div class="hero-stats">
+        <div class="stat-card"><span class="stat-num">5</span><span class="stat-label">Шифров</span></div>
+        <div class="stat-card"><span class="stat-num">15</span><span class="stat-label">Заданий</span></div>
+        <div class="stat-card"><span class="stat-num">&infin;</span><span class="stat-label">Интерес</span></div>
+      </div>
+      <div class="hero-cta">
+        <button class="btn-pill btn-accent" onclick="startLearning()">Начать обучение</button>
+        <button class="btn-pill btn-ghost" onclick="scrollToSec('about')">О проекте</button>
+      </div>
+      <img src="img/fox-normal.png" class="hero-fox" alt="Лисёнок"/>
+    </div>
+    <div class="scroll-hint">&darr;</div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ABOUT -->
+  <section id="sec-about" class="section">
+    <div class="section-inner">
+      <div class="reveal">
+        <div class="section-label">О проекте</div>
+        <h2 class="section-title">Учись шифровать.<br>Интерактивно.</h2>
+        <p class="section-sub">«Дешифратор для студентов и школьников» — статический веб-сайт с обучающими материалами по классическим алгоритмам шифрования, разработанный в рамках учебной практики.</p>
+      </div>
+
+      <div class="reveal">
+        <div class="glass" style="margin-bottom:20px">
+          <h3>Цель проекта</h3>
+          <p>Создать полноценный статический веб-сайт, посвящённый классическим алгоритмам шифрования, доступный и понятный школьникам и студентам младших курсов, освоив при этом базовые навыки работы с Git, Markdown, HTML и CSS.</p>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <h3 style="margin-bottom:16px;font-size:1.1rem;font-weight:700;letter-spacing:-.02em">Задачи</h3>
+      </div>
+      <div class="card-grid">
+        <div class="glass reveal"><p>Изучить основы Git и организовать работу через репозиторий</p></div>
+        <div class="glass reveal reveal-d1"><p>Создать Markdown-документацию проекта</p></div>
+        <div class="glass reveal reveal-d2"><p>Разработать статический веб-сайт на HTML/CSS</p></div>
+        <div class="glass reveal reveal-d3"><p>Ознакомиться с LLM и промпт-инжинирингом</p></div>
+      </div>
+
+      <div class="reveal" style="margin-top:32px">
+        <div class="glass">
+          <h3>Актуальность</h3>
+          <p>Современные школьники и студенты недооценивают практическое применение математики и алгоритмики. Сайт демонстрирует алгоритмы шифрования в действии с понятными объяснениями, связывая теорию с практикой и побуждая интерес к <span class="about-highlight">кибербезопасности</span> и программированию.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- MEMBERS -->
+  <section id="sec-members" class="section">
+    <div class="section-inner">
+      <div class="reveal">
+        <div class="section-label">Участники</div>
+        <h2 class="section-title">Кто за этим стоит</h2>
+        <p class="section-sub">Информация об участнике проекта и его вкладе в разработку</p>
+      </div>
+
+      <div class="reveal">
+        <div class="glass">
+          <div class="member-block">
+            <div class="member-avatar">👨‍💻</div>
+            <div>
+              <div class="member-name">Орлов Руслан Максимович</div>
+              <div class="member-meta">Группа 251-372 &middot; Информационная безопасность</div>
+              <table class="info-table">
+                <tr><td>Группа</td><td>251-372</td></tr>
+                <tr><td>Специальность</td><td>Информационная безопасность</td></tr>
+                <tr><td>Роль</td><td>Разработчик</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal" style="margin-top:32px">
+        <h3 style="font-size:1.1rem;font-weight:700;letter-spacing:-.02em;margin-bottom:8px">Личный вклад</h3>
+      </div>
+      <div class="contrib-grid">
+        <div class="contrib-item reveal"><span class="contrib-icon">◆</span> Проектирование и разработка веб-сайта на HTML/CSS/JS</div>
+        <div class="contrib-item reveal reveal-d1"><span class="contrib-icon">◆</span> Создание интерактивного обучающего интерфейса с геймификацией</div>
+        <div class="contrib-item reveal reveal-d2"><span class="contrib-icon">◆</span> Разработка системы проверки заданий по шифрованию</div>
+        <div class="contrib-item reveal reveal-d3"><span class="contrib-icon">◆</span> Создание Markdown-документации проекта</div>
+        <div class="contrib-item reveal"><span class="contrib-icon">◆</span> Настройка Git-репозитория и версионирования</div>
+        <div class="contrib-item reveal reveal-d1"><span class="contrib-icon">◆</span> Посещение профильного мероприятия (Яндекс)</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- JOURNAL -->
+  <section id="sec-journal" class="section">
+    <div class="section-inner">
+      <div class="reveal">
+        <div class="section-label">Журнал</div>
+        <h2 class="section-title">Хронология проекта</h2>
+        <p class="section-sub">Ключевые этапы выполнения учебной практики</p>
+      </div>
+
+      <div class="timeline">
+        <div class="tl-item reveal">
+          <div class="tl-dot"></div>
+          <div class="tl-date">17 апреля 2026</div>
+          <div class="tl-card">
+            <h3>Посещение мероприятия</h3>
+            <p>Экскурсия в офис компании Яндекс. Знакомство с рабочей средой, технологическим стеком и культурой разработки в крупной IT-компании.</p>
+          </div>
+        </div>
+        <div class="tl-item reveal reveal-d1">
+          <div class="tl-dot"></div>
+          <div class="tl-date">22 апреля 2026</div>
+          <div class="tl-card">
+            <h3>Настройка рабочего окружения</h3>
+            <p>Настройка Git. Генерация SSH-ключа. Принятие приглашения на GitVerse. Клонирование репозитория проекта.</p>
+          </div>
+        </div>
+        <div class="tl-item reveal reveal-d2">
+          <div class="tl-dot"></div>
+          <div class="tl-date">4 мая 2026</div>
+          <div class="tl-card">
+            <h3>Создание документации</h3>
+            <p>Заполнение папки docs: описание проекта, список участников, журнал прогресса, подборка ресурсов. Оформление в Markdown.</p>
+          </div>
+        </div>
+        <div class="tl-item reveal reveal-d3">
+          <div class="tl-dot"></div>
+          <div class="tl-date">20–22 мая 2026</div>
+          <div class="tl-card">
+            <h3>Разработка веб-сайта</h3>
+            <p>Создание статического веб-сайта «Дешифратор» с интерактивным обучающим интерфейсом, маскот-помощником и геймификацией. Добавление страниц документации.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- RESOURCES -->
+  <section id="sec-resources" class="section">
+    <div class="section-inner">
+      <div class="reveal">
+        <div class="section-label">Ресурсы</div>
+        <h2 class="section-title">Полезные ссылки</h2>
+        <p class="section-sub">Материалы и инструменты, использованные в проекте</p>
+      </div>
+
+      <div class="res-category reveal">
+        <div class="res-cat-title">Git и система контроля версий</div>
+        <div class="res-grid">
+          <a class="res-link" href="https://www.youtube.com/watch?v=EeARyFrZsnU" target="_blank" rel="noopener"><span class="res-icon">▶</span> Git и GitHub для новичков <span class="res-source">YouTube</span></a>
+          <a class="res-link" href="https://www.youtube.com/watch?v=XuFaQSW79rM" target="_blank" rel="noopener"><span class="res-icon">▶</span> Гайд по Git за 15 минут <span class="res-source">YouTube</span></a>
+          <a class="res-link" href="https://www.youtube.com/watch?v=W4hoc24K93E&list=PLDyvV36pndZFHXjXuwA_NywNrVQO0aQqb" target="_blank" rel="noopener"><span class="res-icon">▶</span> Git: курс <span class="res-source">YouTube</span></a>
+        </div>
+      </div>
+
+      <div class="res-category reveal">
+        <div class="res-cat-title">Markdown</div>
+        <div class="res-grid">
+          <a class="res-link" href="https://gist.github.com/Jekins/2bf2d0638163f1294637" target="_blank" rel="noopener"><span class="res-icon">📝</span> Руководство по Markdown <span class="res-source">GitHub Gist</span></a>
+        </div>
+      </div>
+
+      <div class="res-category reveal">
+        <div class="res-cat-title">Веб-технологии (HTML/CSS)</div>
+        <div class="res-grid">
+          <a class="res-link" href="https://habr.com/ru/companies/ruvds/articles/910734/" target="_blank" rel="noopener"><span class="res-icon">📰</span> Веб-разработка на HTML, CSS, JS <span class="res-source">Хабр</span></a>
+          <a class="res-link" href="https://www.youtube.com/watch?v=SKRydSA2bYA" target="_blank" rel="noopener"><span class="res-icon">▶</span> Основы HTML для начинающих <span class="res-source">YouTube</span></a>
+          <a class="res-link" href="https://www.youtube.com/watch?v=JKlTjCQa_eY&list=PLDyJYA6aTY1lu4POV7O2M9UOwHOKBaaLs" target="_blank" rel="noopener"><span class="res-icon">▶</span> Курс по вёрстке с нуля <span class="res-source">YouTube</span></a>
+        </div>
+      </div>
+
+      <div class="res-category reveal">
+        <div class="res-cat-title">Криптография</div>
+        <div class="res-grid">
+          <a class="res-link" href="https://www.youtube.com/watch?v=7mn4uq4DBJo" target="_blank" rel="noopener"><span class="res-icon">▶</span> Криптография с нуля <span class="res-source">YouTube</span></a>
+          <a class="res-link" href="https://www.youtube.com/watch?v=qgofSZFTuVc" target="_blank" rel="noopener"><span class="res-icon">▶</span> Как работает шифрование <span class="res-source">YouTube</span></a>
+        </div>
+      </div>
+
+      <div class="res-category reveal">
+        <div class="res-cat-title">LLM и промпт-инжиниринг</div>
+        <div class="res-grid">
+          <a class="res-link" href="https://www.youtube.com/watch?v=BspDBzAmd0g" target="_blank" rel="noopener"><span class="res-icon">▶</span> Промпт-инжиниринг — навык для всех <span class="res-source">YouTube</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <p>© 2026 Дешифратор &middot; Учебный проект &middot; Группа 251-372</p>
+  </footer>
+</div>
+
+<!-- ═══ LEARNING VIEW ═══ -->
+<div id="learning-view" class="hidden">
+  <div class="learn-inner">
+    <div class="learn-topbar">
+      <button class="learn-back" onclick="backToMain()">&larr; К описанию проекта</button>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="prog-fill"></div></div>
+    <div class="progress-label" id="prog-label">0 / 20</div>
+
+    <!-- Cipher menu -->
+    <div id="scr-menu">
+      <h1 class="cipher-menu-title">Выбери шифр</h1>
+      <p class="cipher-menu-sub">Изучай по порядку — от простого к сложному</p>
+      <div class="c-list" id="c-list"></div>
+    </div>
+
+    <!-- Chapter -->
+    <div id="scr-chapter" class="hidden">
+      <div class="ch-topbar">
+        <button class="ch-back" onclick="goMenu()">&larr;</button>
+        <div>
+          <div class="ch-info-cipher" id="ch-cipher"></div>
+          <div class="ch-info-title" id="ch-title"></div>
+        </div>
+      </div>
+      <div id="ch-content"></div>
+    </div>
+
+    <!-- Final -->
+    <div id="scr-final" class="hidden">
+      <div class="final-wrap">
+        <img src="img/fox-normal.png" class="final-fox" alt=""/>
+        <h1>Поздравляю!</h1>
+        <p>Ты прошёл весь курс и теперь знаешь как работают пять классических шифров.</p>
+        <ul class="final-list">
+          <li><span class="chk">✓</span> Код Морзе — точки и тире</li>
+          <li><span class="chk">✓</span> Атбаш — зеркальный алфавит</li>
+          <li><span class="chk">✓</span> Шифр Цезаря — сдвиг букв</li>
+          <li><span class="chk">✓</span> Шифр Виженера — ключевое слово</li>
+          <li><span class="chk">✓</span> Шифр Вернама — абсолютная стойкость</li>
+        </ul>
+        <button class="btn-pill btn-ghost" onclick="backToMain()">Вернуться на главную</button>
+      </div>
     </div>
   </div>
-  <div class="chapter-content" id="chapter-content"></div>
 </div>
 
-<!-- ══════════════════════════════════
-     ФИНАЛЬНЫЙ ЭКРАН
-══════════════════════════════════ -->
-<div id="screen-final" class="screen hidden">
-  <img src="img/fox-normal.png" class="final-fox" alt="Лисёнок"/>
-  <h1>Поздравляю! 🎉</h1>
-  <p>Ты прошёл весь курс и теперь знаешь как работают пять классических шифров!</p>
-  <ul class="final-list">
-    <li><span class="check">✓</span> Код Морзе — точки и тире</li>
-    <li><span class="check">✓</span> Атбаш — зеркальный алфавит</li>
-    <li><span class="check">✓</span> Шифр Цезаря — сдвиг букв</li>
-    <li><span class="check">✓</span> Шифр Виженера — ключевое слово</li>
-    <li><span class="check">✓</span> Шифр Вернама — абсолютная стойкость</li>
-  </ul>
-  <button class="btn-primary" onclick="showScreen('screen-menu')">Вернуться в меню</button>
-</div>
-
-<!-- ══════════════════════════════════
-     МАСКОТ ОВЕРЛЕЙ
-══════════════════════════════════ -->
+<!-- ═══ MASCOT OVERLAY ═══ -->
 <div id="mascot-overlay" class="hidden">
   <div class="mascot-dialog">
     <div class="mascot-bubble">
-      <p id="mascot-text"></p>
-      <span class="hint" id="mascot-hist" style="display:none"></span>
-      <button class="bubble-next" id="mascot-btn" onclick="mascotNext()">Далее →</button>
+      <p id="m-text"></p>
+      <span class="hint" id="m-hist" style="display:none"></span>
+      <button class="bubble-btn" id="m-btn" onclick="mascotNext()">Далее →</button>
     </div>
-    <img id="mascot-img" src="img/fox-normal.png" class="mascot-img" alt=""/>
+    <img id="m-fox" src="img/fox-normal.png" class="mascot-fox" alt=""/>
   </div>
 </div>
 
-<!-- Кнопка маскота в углу (только на экране задания) -->
-<button id="mascot-hint-btn" class="hidden" onclick="showHint()">
+<button id="hint-btn" class="hidden" onclick="showHint()">
   <img src="img/fox-normal.png" alt="Подсказка"/>
 </button>
 
 <script>
-/* preload всех поз лиса */
-['img/fox-normal.png','img/fox-smart.png','img/fox-explain.png'].forEach(src=>{
-  const i = new Image(); i.src = src;
-});
+/* ═══ PRELOAD ═══ */
+['img/fox-normal.png','img/fox-smart.png','img/fox-explain.png'].forEach(s=>{const i=new Image();i.src=s});
 
-/* ─────────────────────────────────────────
-   ДАННЫЕ
-───────────────────────────────────────── */
-const CIPHERS = [
-  {
-    id: 'morse',
-    title: 'Код Морзе',
-    dots: ['green','',''],
-    chapters: [
-      { type:'prologue', label:'📖 Пролог',    dots:['filled-g','',''] },
-      { type:'task',     label:'📝 Задание 1', dots:['filled-g','',''], taskIdx:0 },
-      { type:'task',     label:'📝 Задание 2', dots:['filled-g','filled-y',''], taskIdx:1 },
-      { type:'task',     label:'📝 Задание 3', dots:['filled-y','filled-y',''], taskIdx:2 },
-    ],
-    prologue: {
-      mascotLines: [
-        { img:'smart', text:'Код Морзе — это не совсем шифр, это код. Каждая буква заменяется уникальной комбинацией точек и тире.' },
-        { img:'smart', text:'Точка — короткий сигнал, тире — длинный. Буквы разделяются паузой, слова — длинной паузой.' },
-        { img:'smart',   text:'А вот и историческая справка...', hist:'Азбука Морзе изобретена Сэмюэлом Морзе в 1838 году для телеграфа. Сигнал SOS (··· — — — ···) принят как международный сигнал бедствия в 1906 году.' },
-      ],
-      content: {
-        title: 'Как работает код Морзе',
-        body: [
-          'Код Морзе — система кодирования букв и цифр с помощью коротких (·) и длинных (—) сигналов. Каждый символ имеет уникальную комбинацию.',
-          'Например: A = ·—, B = —···, S = ···, O = — — —',
-          'Между буквами короткая пауза, между словами — длинная. Код используется в радиосвязи, на флоте и в авиации до сих пор.',
-        ],
-        hist: 'Азбука Морзе изобретена Сэмюэлом Морзе в 1838 году для телеграфа. Сигнал SOS принят международным сигналом бедствия в 1906 году.'
-      }
-    },
-    tasks: [
-      { mascot:'Расшифруй сообщение по таблице Морзе. Каждая группа символов — одна буква.', answer:'SOS',    text:'Расшифруй: <span class="mono">··· — — — ···</span>', showMorse:true },
-      { mascot:'Зашифруй слово HELLO с помощью таблицы кода Морзе. Пиши буквами через пробел.', answer:'HELLO', text:'Расшифруй: <span class="mono">···· · ·—·· ·—·· — — —</span>', showMorse:true },
-      { mascot:'Попробуй прочитать это длинное сообщение. Пиши слово целиком.', answer:'SECRET', text:'Расшифруй: <span class="mono">··· · —·—· ·· · —·</span>', showMorse:true },
-    ]
-  },
-  {
-    id: 'atbash',
-    title: 'Атбаш',
-    dots: ['green','yellow',''],
-    chapters: [
-      { type:'prologue', label:'📖 Пролог',    dots:['filled-g','',''] },
-      { type:'task',     label:'📝 Задание 1', dots:['filled-g','',''], taskIdx:0 },
-      { type:'task',     label:'📝 Задание 2', dots:['filled-g','filled-y',''], taskIdx:1 },
-      { type:'task',     label:'📝 Задание 3', dots:['filled-y','filled-y','filled-r'], taskIdx:2 },
-    ],
-    prologue: {
-      mascotLines: [
-        { img:'smart', text:'Атбаш — один из древнейших шифров. Алфавит просто переворачивается: первая буква становится последней и наоборот.' },
-        { img:'smart', text:'A становится Z, B становится Y, C становится X... и так далее до середины.' },
-        { img:'smart',   text:'Вот интересный факт...', hist:'Атбаш появился в древнееврейской культуре около 600 года до н.э. и шифровал религиозные тексты. Название — от букв Алеф, Тав, Бет, Шин.' },
-      ],
-      content: {
-        title: 'Как работает Атбаш',
-        body: [
-          'Атбаш — шифр простой замены. Алфавит записывается в прямом и обратном порядке, и каждая буква заменяется своим зеркалом.',
-          'A↔Z, B↔Y, C↔X, D↔W, E↔V, F↔U, G↔T, H↔S, I↔R, J↔Q, K↔P, L↔O, M↔N',
-          'Особенность: шифрование и дешифрование — одна и та же операция. Зашифруй зашифрованное — получишь исходное.',
-        ],
-        hist:'Атбаш появился в древнееврейской культуре около 600 года до н.э. Использовался для шифрования религиозных текстов Библии.'
-      }
-    },
-    tasks: [
-      { mascot:'Используй таблицу ниже. Найди каждую букву и замени её зеркалом.', answer:'CODE', text:'Расшифруй Атбашем: <span class="mono">XLWV</span>', showAtbash:true },
-      { mascot:'Зашифруй слово. Помни: операция та же — ищи зеркало каждой буквы.', answer:'SZXP', text:'Зашифруй Атбашем: <span class="mono">HACK</span>', showAtbash:true },
-      { mascot:'Теперь два слова. Пробел оставь пробелом, шифруй только буквы.', answer:'SAFE DOOR', text:'Расшифруй Атбашем: <span class="mono">HZUV WLLI</span>', showAtbash:true },
-    ]
-  },
-  {
-    id: 'caesar',
-    title: 'Шифр Цезаря',
-    dots: ['yellow','yellow',''],
-    chapters: [
-      { type:'prologue', label:'📖 Пролог',    dots:['filled-g','',''] },
-      { type:'task',     label:'📝 Задание 1', dots:['filled-g','',''], taskIdx:0 },
-      { type:'task',     label:'📝 Задание 2', dots:['filled-y','filled-y',''], taskIdx:1 },
-      { type:'task',     label:'📝 Задание 3', dots:['filled-y','filled-y','filled-r'], taskIdx:2 },
-    ],
-    prologue: {
-      mascotLines: [
-        { img:'smart', text:'Шифр Цезаря сдвигает каждую букву вперёд по алфавиту на одно и то же фиксированное число.' },
-        { img:'smart', text:'При сдвиге 3: A→D, B→E, C→F. Для расшифровки сдвигаем обратно на то же число.' },
-        { img:'smart',   text:'А вот история этого шифра...', hist:'Юлий Цезарь использовал сдвиг 3 для переписки с полководцами около 50 года до н.э. Шифр носит его имя уже более двух тысяч лет.' },
-      ],
-      content: {
-        title: 'Как работает шифр Цезаря',
-        body: [
-          'Шифр Цезаря — шифр сдвига. Каждая буква заменяется буквой, стоящей на N позиций дальше в алфавите. N — ключ.',
-          'Если доходим до конца алфавита — начинаем сначала: после Z идёт A.',
-          'Пример (сдвиг 3): HELLO → KHOOR. Для расшифровки: KHOOR — сдвигаем назад на 3 → HELLO.',
-        ],
-        hist:'Юлий Цезарь применял сдвиг 3 для военной переписки около 50 года до н.э. Этот шифр — один из первых задокументированных в истории.'
-      }
-    },
-    tasks: [
-      { mascot:'Ключ — 3. Каждую букву сдвигай на 3 назад по алфавиту. Используй таблицу алфавита если нужно.', answer:'HELLO', text:'Расшифруй (сдвиг 3): <span class="mono">KHOOR</span>' },
-      { mascot:'Теперь шифруем! Сдвигай каждую букву на 7 позиций вперёд.', answer:'ZLJYLA', text:'Зашифруй (сдвиг 7): <span class="mono">SECRET</span>' },
-      { mascot:'Ключ неизвестен, но он от 1 до 5. Попробуй каждый сдвиг по очереди пока слово не станет осмысленным.', answer:'HACKER', text:'Взломай (сдвиг от 1 до 5): <span class="mono">KDFNHU</span>' },
-    ]
-  },
-  {
-    id: 'vigenere',
-    title: 'Шифр Виженера',
-    dots: ['yellow','yellow','red'],
-    chapters: [
-      { type:'prologue', label:'📖 Пролог',    dots:['filled-g','',''] },
-      { type:'task',     label:'📝 Задание 1', dots:['filled-g','filled-y',''], taskIdx:0 },
-      { type:'task',     label:'📝 Задание 2', dots:['filled-y','filled-y',''], taskIdx:1 },
-      { type:'task',     label:'📝 Задание 3', dots:['filled-y','filled-y','filled-r'], taskIdx:2 },
-    ],
-    prologue: {
-      mascotLines: [
-        { img:'smart', text:'Виженер — это как много шифров Цезаря одновременно. Каждая буква сдвигается на своё число.' },
-        { img:'smart', text:'Число сдвига определяет ключевое слово. Буква A ключа = сдвиг 0, B = 1, K = 10... Ключ повторяется циклически.' },
-        { img:'smart',   text:'Запомни этот факт...', hist:'Шифр описан в 1553 году Джованни Беллазо. Почти 300 лет считался невзламываемым — его называли «le chiffre indéchiffrable».' },
-      ],
-      content: {
-        title: 'Как работает шифр Виженера',
-        body: [
-          'Виженер — полиалфавитный шифр. Для каждой буквы текста сдвиг разный — он определяется соответствующей буквой ключа.',
-          'Перевод букв ключа в числа: A=0, B=1, C=2... Z=25. Складываем с номером буквы текста по модулю 26.',
-          'Пример: HELLO + ключ KEY → H(7)+K(10)=R, E(4)+E(4)=I, L(11)+Y(24)=J, L(11)+K(10)=V, O(14)+E(4)=S → RIJVS',
-        ],
-        hist:'Шифр Виженера описан в 1553 году итальянцем Джованни Беллазо. 300 лет считался невзламываемым — «le chiffre indéchiffrable».'
-      }
-    },
-    tasks: [
-      { mascot:'Ключ KEY. K=10, E=4, Y=24. Вычти значение каждой буквы ключа из буквы шифртекста по модулю 26.', answer:'HELLO', text:'Расшифруй (ключ KEY): <span class="mono">RIJVS</span>' },
-      { mascot:'Зашифруй: C=2, O=14, D=3, E=4. Прибавляй к каждой букве слова соответствующую букву ключа.', answer:'YCUPF', text:'Зашифруй (ключ CODE): <span class="mono">WORLD</span>' },
-      { mascot:'Знаем открытый текст и шифртекст. Ключ — одно из трёх слов. Попробуй каждое.', answer:'KEY', text:'HELLO зашифровано как RIJVS. Найди ключ: LOCK / KEY / SAFE' },
-    ]
-  },
-  {
-    id: 'vernam',
-    title: 'Шифр Вернама',
-    dots: ['red','red','red'],
-    chapters: [
-      { type:'prologue', label:'📖 Пролог',    dots:['filled-g','',''] },
-      { type:'task',     label:'📝 Задание 1', dots:['filled-g','filled-y',''], taskIdx:0 },
-      { type:'task',     label:'📝 Задание 2', dots:['filled-y','filled-y',''], taskIdx:1 },
-      { type:'task',     label:'📝 Задание 3', dots:['filled-y','filled-y','filled-r'], taskIdx:2 },
-    ],
-    prologue: {
-      mascotLines: [
-        { img:'smart', text:'Шифр Вернама — единственный абсолютно стойкий шифр в мире. Его невозможно взломать если ключ случайный и используется только один раз.' },
-        { img:'smart', text:'Переводим буквы в числа: A=0, B=1... Z=25. Складываем буквы текста и ключа по модулю 26 — это значит если сумма ≥ 26, вычитаем 26.' },
-        { img:'smart',   text:'Вот исторический факт...', hist:'Гилберт Вернам изобрёл шифр в 1917 году для телеграфа. На его основе работала «красная линия» — защищённая связь между Москвой и Вашингтоном в годы Холодной войны.' },
-      ],
-      content: {
-        title: 'Как работает шифр Вернама',
-        body: [
-          'Каждая буква текста складывается с соответствующей буквой ключа. Ключ должен быть случайным, одноразовым и равным по длине тексту.',
-          'Формула: (номер_буквы_текста + номер_буквы_ключа) mod 26 = номер_буквы_шифртекста',
-          'Для расшифровки: (номер_буквы_шифртекста − номер_буквы_ключа + 26) mod 26',
-        ],
-        hist:'Гилберт Вернам изобрёл шифр в 1917 году. На его принципе работала «красная линия» — прямая защищённая связь Москва–Вашингтон в годы Холодной войны.'
-      }
-    },
-    tasks: [
-      { mascot:'Используй таблицу внизу. H=7, A=0. Сложи и переведи обратно в букву.', answer:'HJ', text:'Зашифруй: текст <span class="mono">HI</span>, ключ <span class="mono">AB</span>', showVernam:true },
-      { mascot:'Теперь четыре буквы. Переводи каждую пару, складывай по модулю 26.', answer:'MSBW', text:'Зашифруй: текст <span class="mono">CODE</span>, ключ <span class="mono">KEYS</span>', showVernam:true },
-      { mascot:'Для дешифровки — вычитай букву ключа из буквы шифртекста. Если результат отрицательный — прибавь 26.', answer:'SAFE', text:'Расшифруй: шифртекст <span class="mono">DOHO</span>, ключ <span class="mono">LOCK</span>', showVernam:true },
-    ]
-  }
+/* ═══ DATA ═══ */
+const CIPHERS=[
+  {id:'morse',title:'Код Морзе',desc:'Точки и тире — основы кодирования',
+   chapters:[
+     {type:'prologue',label:'📖 Пролог',key:'morse-0'},
+     {type:'task',label:'📝 Задание 1',key:'morse-1',taskIdx:0},
+     {type:'task',label:'📝 Задание 2',key:'morse-2',taskIdx:1},
+     {type:'task',label:'📝 Задание 3',key:'morse-3',taskIdx:2}],
+   prologue:{mascotLines:[
+     {img:'smart',text:'Код Морзе — это не совсем шифр, это код. Каждая буква заменяется уникальной комбинацией точек и тире.'},
+     {img:'smart',text:'Точка — короткий сигнал, тире — длинный. Буквы разделяются паузой, слова — длинной паузой.'},
+     {img:'smart',text:'А вот и историческая справка...',hist:'Азбука Морзе изобретена Сэмюэлом Морзе в 1838 году для телеграфа. Сигнал SOS принят как международный сигнал бедствия в 1906 году.'}],
+     content:{title:'Как работает код Морзе',body:['Код Морзе — система кодирования букв и цифр с помощью коротких (·) и длинных (—) сигналов. Каждый символ имеет уникальную комбинацию.','Например: A = ·—, B = —···, S = ···, O = ———','Между буквами короткая пауза, между словами — длинная. Код используется в радиосвязи, на флоте и в авиации до сих пор.'],
+     hist:'Азбука Морзе изобретена Сэмюэлом Морзе в 1838 году для телеграфа. Сигнал SOS принят международным сигналом бедствия в 1906 году.'}},
+   tasks:[
+     {mascot:'Расшифруй сообщение по таблице Морзе. Каждая группа символов — одна буква.',answer:'SOS',text:'Расшифруй: <span class="mono">··· ——— ···</span>',showMorse:true},
+     {mascot:'Расшифруй слово по таблице Морзе. Пиши буквами без пробелов.',answer:'HELLO',text:'Расшифруй: <span class="mono">···· · ·—·· ·—·· ———</span>',showMorse:true},
+     {mascot:'Попробуй прочитать это длинное сообщение. Пиши слово целиком.',answer:'SECRET',text:'Расшифруй: <span class="mono">··· · —·—· ·· · —·</span>',showMorse:true}]},
+
+  {id:'atbash',title:'Атбаш',desc:'Зеркальный алфавит — древний шифр замены',
+   chapters:[
+     {type:'prologue',label:'📖 Пролог',key:'atbash-0'},
+     {type:'task',label:'📝 Задание 1',key:'atbash-1',taskIdx:0},
+     {type:'task',label:'📝 Задание 2',key:'atbash-2',taskIdx:1},
+     {type:'task',label:'📝 Задание 3',key:'atbash-3',taskIdx:2}],
+   prologue:{mascotLines:[
+     {img:'smart',text:'Атбаш — один из древнейших шифров. Алфавит просто переворачивается: первая буква становится последней и наоборот.'},
+     {img:'smart',text:'A становится Z, B становится Y, C становится X... и так далее до середины.'},
+     {img:'smart',text:'Вот интересный факт...',hist:'Атбаш появился в древнееврейской культуре около 600 года до н.э. Название — от букв Алеф, Тав, Бет, Шин.'}],
+     content:{title:'Как работает Атбаш',body:['Атбаш — шифр простой замены. Алфавит записывается в прямом и обратном порядке, и каждая буква заменяется своим зеркалом.','A↔Z, B↔Y, C↔X, D↔W, E↔V, F↔U, G↔T, H↔S, I↔R, J↔Q, K↔P, L↔O, M↔N','Особенность: шифрование и дешифрование — одна и та же операция.'],
+     hist:'Атбаш появился в древнееврейской культуре около 600 года до н.э. Использовался для шифрования религиозных текстов.'}},
+   tasks:[
+     {mascot:'Используй таблицу ниже. Найди каждую букву и замени её зеркалом.',answer:'CODE',text:'Расшифруй Атбашем: <span class="mono">XLWV</span>',showAtbash:true},
+     {mascot:'Зашифруй слово. Помни: операция та же — ищи зеркало каждой буквы.',answer:'SZXP',text:'Зашифруй Атбашем: <span class="mono">HACK</span>',showAtbash:true},
+     {mascot:'Теперь два слова. Пробел оставь пробелом, шифруй только буквы.',answer:'SAFE DOOR',text:'Расшифруй Атбашем: <span class="mono">HZUV WLLI</span>',showAtbash:true}]},
+
+  {id:'caesar',title:'Шифр Цезаря',desc:'Сдвиг букв — классика криптографии',
+   chapters:[
+     {type:'prologue',label:'📖 Пролог',key:'caesar-0'},
+     {type:'task',label:'📝 Задание 1',key:'caesar-1',taskIdx:0},
+     {type:'task',label:'📝 Задание 2',key:'caesar-2',taskIdx:1},
+     {type:'task',label:'📝 Задание 3',key:'caesar-3',taskIdx:2}],
+   prologue:{mascotLines:[
+     {img:'smart',text:'Шифр Цезаря сдвигает каждую букву вперёд по алфавиту на одно и то же фиксированное число.'},
+     {img:'smart',text:'При сдвиге 3: A→D, B→E, C→F. Для расшифровки сдвигаем обратно на то же число.'},
+     {img:'smart',text:'А вот история этого шифра...',hist:'Юлий Цезарь использовал сдвиг 3 для переписки с полководцами около 50 года до н.э.'}],
+     content:{title:'Как работает шифр Цезаря',body:['Шифр Цезаря — шифр сдвига. Каждая буква заменяется буквой, стоящей на N позиций дальше в алфавите. N — ключ.','Если доходим до конца алфавита — начинаем сначала: после Z идёт A.','Пример (сдвиг 3): HELLO → KHOOR. Для расшифровки: KHOOR → HELLO.'],
+     hist:'Юлий Цезарь применял сдвиг 3 для военной переписки около 50 года до н.э.'}},
+   tasks:[
+     {mascot:'Ключ — 3. Каждую букву сдвигай на 3 назад по алфавиту.',answer:'HELLO',text:'Расшифруй (сдвиг 3): <span class="mono">KHOOR</span>'},
+     {mascot:'Теперь шифруем! Сдвигай каждую букву на 7 позиций вперёд.',answer:'ZLJYLA',text:'Зашифруй (сдвиг 7): <span class="mono">SECRET</span>'},
+     {mascot:'Ключ неизвестен, но он от 1 до 5. Попробуй каждый сдвиг.',answer:'HACKER',text:'Взломай (сдвиг от 1 до 5): <span class="mono">KDFNHU</span>'}]},
+
+  {id:'vigenere',title:'Шифр Виженера',desc:'Ключевое слово — полиалфавитный шифр',
+   chapters:[
+     {type:'prologue',label:'📖 Пролог',key:'vigenere-0'},
+     {type:'task',label:'📝 Задание 1',key:'vigenere-1',taskIdx:0},
+     {type:'task',label:'📝 Задание 2',key:'vigenere-2',taskIdx:1},
+     {type:'task',label:'📝 Задание 3',key:'vigenere-3',taskIdx:2}],
+   prologue:{mascotLines:[
+     {img:'smart',text:'Виженер — это как много шифров Цезаря одновременно. Каждая буква сдвигается на своё число.'},
+     {img:'smart',text:'Число сдвига определяет ключевое слово. Буква A ключа = сдвиг 0, B = 1, K = 10... Ключ повторяется циклически.'},
+     {img:'smart',text:'Запомни этот факт...',hist:'Шифр описан в 1553 году Джованни Беллазо. Почти 300 лет считался невзламываемым — «le chiffre indéchiffrable».'}],
+     content:{title:'Как работает шифр Виженера',body:['Виженер — полиалфавитный шифр. Для каждой буквы текста сдвиг разный — он определяется соответствующей буквой ключа.','Перевод букв ключа в числа: A=0, B=1, C=2... Z=25. Складываем с номером буквы текста по модулю 26.','Пример: HELLO + ключ KEY → H(7)+K(10)=R, E(4)+E(4)=I, L(11)+Y(24)=J, L(11)+K(10)=V, O(14)+E(4)=S → RIJVS'],
+     hist:'Шифр Виженера описан в 1553 году. 300 лет считался невзламываемым.'}},
+   tasks:[
+     {mascot:'Ключ KEY. K=10, E=4, Y=24. Вычти значение каждой буквы ключа из буквы шифртекста по модулю 26.',answer:'HELLO',text:'Расшифруй (ключ KEY): <span class="mono">RIJVS</span>'},
+     {mascot:'Зашифруй: C=2, O=14, D=3, E=4. Прибавляй к каждой букве слова соответствующую букву ключа.',answer:'YCUPF',text:'Зашифруй (ключ CODE): <span class="mono">WORLD</span>'},
+     {mascot:'Знаем открытый текст и шифртекст. Ключ — одно из трёх слов. Попробуй каждое.',answer:'KEY',text:'HELLO зашифровано как RIJVS. Найди ключ: LOCK / KEY / SAFE'}]},
+
+  {id:'vernam',title:'Шифр Вернама',desc:'Абсолютная стойкость — однозначовая запись',
+   chapters:[
+     {type:'prologue',label:'📖 Пролог',key:'vernam-0'},
+     {type:'task',label:'📝 Задание 1',key:'vernam-1',taskIdx:0},
+     {type:'task',label:'📝 Задание 2',key:'vernam-2',taskIdx:1},
+     {type:'task',label:'📝 Задание 3',key:'vernam-3',taskIdx:2}],
+   prologue:{mascotLines:[
+     {img:'smart',text:'Шифр Вернама — единственный абсолютно стойкий шифр. Его невозможно взломать если ключ случайный и одноразовый.'},
+     {img:'smart',text:'Переводим буквы в числа: A=0, B=1... Z=25. Складываем буквы текста и ключа по модулю 26.'},
+     {img:'smart',text:'Вот исторический факт...',hist:'Гилберт Вернам изобрёл шифр в 1917 году. На его основе работала «красная линия» — защищённая связь Москва–Вашингтон.'}],
+     content:{title:'Как работает шифр Вернама',body:['Каждая буква текста складывается с соответствующей буквой ключа. Ключ должен быть случайным, одноразовым и равным по длине тексту.','Формула: (номер_буквы_текста + номер_буквы_ключа) mod 26 = номер_буквы_шифртекста','Для расшифровки: (номер_буквы_шифртекста − номер_буквы_ключа + 26) mod 26'],
+     hist:'Гилберт Вернам изобрёл шифр в 1917 году. На его принципе работала «красная линия» — защищённая связь Москва–Вашингтон.'}},
+   tasks:[
+     {mascot:'Используй таблицу внизу. H=7, A=0. Сложи и переведи обратно в букву.',answer:'HJ',text:'Зашифруй: текст <span class="mono">HI</span>, ключ <span class="mono">AB</span>',showVernam:true},
+     {mascot:'Теперь четыре буквы. Переводи каждую пару, складывай по модулю 26.',answer:'MSBW',text:'Зашифруй: текст <span class="mono">CODE</span>, ключ <span class="mono">KEYS</span>',showVernam:true},
+     {mascot:'Для дешифровки — вычитай букву ключа из буквы шифртекста. Если отрицательный — прибавь 26.',answer:'SAFE',text:'Расшифруй: шифртекст <span class="mono">DOHO</span>, ключ <span class="mono">LOCK</span>',showVernam:true}]}
 ];
 
-const MORSE_TABLE = {A:'·—',B:'—···',C:'—·—·',D:'—··',E:'·',F:'··—·',G:'——·',H:'····',I:'··',J:'·———',K:'—·—',L:'·—··',M:'——',N:'—·',O:'———',P:'·——·',Q:'——·—',R:'·—·',S:'···',T:'—',U:'··—',V:'···—',W:'·——',X:'—··—',Y:'—·——',Z:'——··'};
+const MORSE={A:'·—',B:'—···',C:'—·—·',D:'—··',E:'·',F:'··—·',G:'——·',H:'····',I:'··',J:'·———',K:'—·—',L:'·—··',M:'——',N:'—·',O:'———',P:'·——·',Q:'——·—',R:'·—·',S:'···',T:'—',U:'··—',V:'···—',W:'·——',X:'—··—',Y:'—·——',Z:'——··'};
 
-/* ─────────────────────────────────────────
-   СОСТОЯНИЕ
-───────────────────────────────────────── */
-let currentCipherIdx  = 0;
-let currentChapterIdx = 0;
-let mascotQueue       = [];
-let mascotQueueIdx    = 0;
-let mascotCallback    = null;
-let currentHintText   = '';
-let currentHintImg    = 'normal';
+/* ═══ STATE ═══ */
+let cIdx=0,chIdx=0,mQ=[],mQI=0,mCb=null,hintTxt='',hintImg='normal';
+const done=new Set();
 
-/* ─────────────────────────────────────────
-   ЭКРАНЫ
-───────────────────────────────────────── */
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-  document.getElementById('mascot-hint-btn').classList.add('hidden');
+/* ═══ NAVIGATION ═══ */
+const mainView=document.getElementById('main-view');
+const learnView=document.getElementById('learning-view');
+const navLinks=document.querySelectorAll('.nav-link[data-sec]');
+const secs=document.querySelectorAll('section[id^="sec-"]');
+
+function navTo(sec){
+  closeMobile();
+  if(!mainView.classList.contains('hidden')){
+    scrollToSec(sec);
+  }else{
+    mainView.classList.remove('hidden');
+    learnView.classList.add('hidden');
+    document.getElementById('hint-btn').classList.add('hidden');
+    setTimeout(()=>scrollToSec(sec),50);
+  }
+}
+function scrollToSec(id){
+  document.getElementById('sec-'+id).scrollIntoView({behavior:'smooth'});
 }
 
-/* ─────────────────────────────────────────
-   МАСКОТ
-───────────────────────────────────────── */
-const FOX_IMGS = {
-  normal:  'img/fox-normal.png',
-  smart:   'img/fox-smart.png',
-  explain: 'img/fox-smart.png',
-};
+// Active nav on scroll
+const secObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const id=e.target.id.replace('sec-','');
+      navLinks.forEach(l=>l.classList.toggle('active',l.dataset.sec===id));
+    }
+  });
+},{threshold:.3});
+secs.forEach(s=>secObs.observe(s));
 
-function showMascot(lines, callback) {
-  mascotQueue    = lines;
-  mascotQueueIdx = 0;
-  mascotCallback = callback;
-  renderMascotLine();
+// Scroll reveal
+const revObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('revealed')});
+},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+
+// Mobile menu
+document.getElementById('hamburger').addEventListener('click',()=>{
+  document.getElementById('mobile-menu').classList.add('open');
+});
+function closeMobile(){document.getElementById('mobile-menu').classList.remove('open')}
+
+/* ═══ MASCOT ═══ */
+const FOX={normal:'img/fox-normal.png',smart:'img/fox-smart.png',explain:'img/fox-smart.png'};
+function showMascot(lines,cb){
+  mQ=lines;mQI=0;mCb=cb;renderLine();
   document.getElementById('mascot-overlay').classList.remove('hidden');
 }
+function renderLine(){
+  const l=mQ[mQI];
+  document.getElementById('m-fox').src=FOX[l.img]||FOX.smart;
+  document.getElementById('m-text').textContent=l.text;
+  const h=document.getElementById('m-hist');
+  if(l.hist){h.textContent=l.hist;h.style.display='block'}else{h.style.display='none'}
+  document.getElementById('m-btn').textContent=mQI===mQ.length-1?'Понятно!':'Далее →';
+}
+function mascotNext(){
+  mQI++;
+  if(mQI<mQ.length)renderLine();
+  else{document.getElementById('mascot-overlay').classList.add('hidden');if(mCb)mCb()}
+}
+function showHint(){showMascot([{img:hintImg,text:hintTxt}],null)}
 
-function renderMascotLine() {
-  const line = mascotQueue[mascotQueueIdx];
-  document.getElementById('mascot-img').src  = FOX_IMGS[line.img] || FOX_IMGS.smart;
-  document.getElementById('mascot-text').textContent = line.text;
-  const histEl = document.getElementById('mascot-hist');
-  if (line.hist) {
-    histEl.textContent = line.hist;
-    histEl.style.display = 'block';
-  } else {
-    histEl.style.display = 'none';
-  }
-  const isLast = mascotQueueIdx === mascotQueue.length - 1;
-  document.getElementById('mascot-btn').textContent = isLast ? 'Понятно!' : 'Далее →';
+/* ═══ LEARNING ═══ */
+function startLearning(){
+  mainView.classList.add('hidden');
+  learnView.classList.remove('hidden');
+  showScr('scr-menu');buildMenu();updateProg();
+  setTimeout(()=>showMascot([
+    {img:'normal',text:'Привет! Я рад что ты здесь. Сейчас ты узнаешь как работают шифры — секретные способы скрывать информацию.'},
+    {img:'smart',text:'Шифры используются тысячи лет — от древних посланий до защиты данных в интернете.'},
+    {img:'smart',text:'Я подготовил для тебя пять шифров. Рекомендую идти по порядку!'}
+  ],null),200);
+}
+function backToMain(){
+  learnView.classList.add('hidden');mainView.classList.remove('hidden');
+  document.getElementById('hint-btn').classList.add('hidden');
+  window.scrollTo(0,0);
+}
+function showScr(id){
+  ['scr-menu','scr-chapter','scr-final'].forEach(s=>document.getElementById(s).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.getElementById('hint-btn').classList.add('hidden');
+}
+function updateProg(){
+  const total=CIPHERS.reduce((s,c)=>s+c.chapters.length,0);
+  const pct=Math.round(done.size/total*100);
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-label').textContent=done.size+' / '+total;
 }
 
-function mascotNext() {
-  mascotQueueIdx++;
-  if (mascotQueueIdx < mascotQueue.length) {
-    renderMascotLine();
-  } else {
-    document.getElementById('mascot-overlay').classList.add('hidden');
-    if (mascotCallback) mascotCallback();
-  }
-}
-
-function showHint() {
-  showMascot([{ img: currentHintImg, text: currentHintText }], null);
-}
-
-/* ─────────────────────────────────────────
-   ВСТУПЛЕНИЕ (при входе в меню)
-───────────────────────────────────────── */
-function startIntro() {
-  showScreen('screen-menu');
-  buildMenu();
-  setTimeout(() => {
-    showMascot([
-      { img:'normal',  text:'Привет! Я рад что ты здесь. Сейчас ты узнаешь как работают шифры — секретные способы скрывать информацию.' },
-      { img:'smart', text:'Шифры используются тысячи лет — от древних посланий до защиты данных в интернете.' },
-      { img:'smart', text:'Я подготовил для тебя пять шифров расположенных по сложности.' },
-      { img:'smart',   text:'Рекомендую начать с первого — кода Морзе. Он самый простой и поможет войти во вкус!' },
-    ], null);
-  }, 200);
-}
-
-/* ─────────────────────────────────────────
-   МЕНЮ
-───────────────────────────────────────── */
-function buildMenu() {
-  const list = document.getElementById('ciphers-list');
-  list.innerHTML = '';
-  CIPHERS.forEach((cipher, ci) => {
-    const card = document.createElement('div');
-    card.className = 'cipher-card';
-    card.innerHTML = `
-      <div class="cipher-header" onclick="toggleCipher(${ci})">
-        <div class="cipher-name">
-          <div class="cipher-num">${ci+1}</div>
-          <span class="cipher-title">${cipher.title}</span>
+/* ═══ MENU ═══ */
+function buildMenu(){
+  const list=document.getElementById('c-list');list.innerHTML='';
+  CIPHERS.forEach((c,ci)=>{
+    const allDone=c.chapters.every(ch=>done.has(ch.key));
+    const card=document.createElement('div');card.className='c-card';card.id='c-card-'+ci;
+    card.innerHTML=`
+      <div class="c-head" onclick="toggleCipher(${ci})">
+        <div class="c-head-left">
+          <div class="c-num">${ci+1}</div>
+          <div><div class="c-title">${c.title}</div><div class="c-desc">${c.desc}</div></div>
         </div>
-        <div class="cipher-dots">
-          ${cipher.dots.map(d => `<div class="dot ${d}"></div>`).join('')}
+        <div style="display:flex;align-items:center;gap:12px">
+          ${allDone?'<span class="c-status">✓ Пройдено</span>':''}
+          <span class="c-chevron">›</span>
         </div>
       </div>
-      <div class="cipher-chapters hidden" id="chapters-${ci}">
-        ${cipher.chapters.map((ch, chi) => `
-          <button class="chapter-btn" onclick="openChapter(${ci},${chi})">
-            <span class="ch-left">
-              <span class="chapter-icon">${ch.label.split(' ')[0]}</span>
-              <span>${ch.label.split(' ').slice(1).join(' ')}</span>
-            </span>
-            <span class="ch-dots">
-              ${ch.dots.map(d => `<span class="ch-dot ${d}"></span>`).join('')}
-            </span>
-          </button>
-        `).join('')}
-      </div>
-    `;
+      <div class="c-chapters">
+        ${c.chapters.map((ch,chi)=>{
+          const d=done.has(ch.key);
+          return `<button class="ch-btn" onclick="openCh(${ci},${chi})"><span>${ch.label}</span>${d?'<span class="ch-done">✓</span>':''}</button>`;
+        }).join('')}
+      </div>`;
     list.appendChild(card);
   });
 }
-
-function toggleCipher(ci) {
-  const el = document.getElementById(`chapters-${ci}`);
-  el.classList.toggle('hidden');
+function toggleCipher(ci){
+  const el=document.getElementById('c-card-'+ci);
+  const wasOpen=el.classList.contains('open');
+  document.querySelectorAll('.c-card').forEach(c=>c.classList.remove('open'));
+  if(!wasOpen)el.classList.add('open');
 }
 
-/* ─────────────────────────────────────────
-   ОТКРЫТЬ ГЛАВУ
-───────────────────────────────────────── */
-function openChapter(ci, chi) {
-  currentCipherIdx  = ci;
-  currentChapterIdx = chi;
-  const cipher  = CIPHERS[ci];
-  const chapter = cipher.chapters[chi];
-
-  document.getElementById('topbar-cipher').textContent  = cipher.title;
-  document.getElementById('topbar-chapter').textContent = chapter.label.split(' ').slice(1).join(' ');
-
-  showScreen('screen-chapter');
-
-  if (chapter.type === 'prologue') {
-    startPrologue(ci);
-  } else {
-    startTask(ci, chapter.taskIdx);
+/* ═══ CHAPTER ═══ */
+function openCh(ci,chi){
+  cIdx=ci;chIdx=chi;
+  const c=CIPHERS[ci],ch=c.chapters[chi];
+  document.getElementById('ch-cipher').textContent=c.title;
+  document.getElementById('ch-title').textContent=ch.label;
+  showScr('scr-chapter');
+  if(ch.type==='prologue')startPrologue(ci);else startTask(ci,ch.taskIdx);
+}
+function startPrologue(ci){
+  document.getElementById('ch-content').innerHTML='';
+  showMascot(CIPHERS[ci].prologue.mascotLines,()=>{
+    const p=CIPHERS[ci].prologue;
+    const el=document.getElementById('ch-content');
+    el.innerHTML=`<div class="content-card" id="pc"><h2>${p.content.title}</h2>${p.content.body.map(b=>`<p>${b}</p>`).join('')}<div class="history-note">${p.content.hist}</div><button class="btn-next" onclick="nextCh()">Далее →</button></div>`;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('pc').classList.add('visible')));
+    markDone(CIPHERS[ci].chapters[0].key);
+  });
+}
+function startTask(ci,ti){
+  const t=CIPHERS[ci].tasks[ti];
+  document.getElementById('ch-content').innerHTML='';
+  hintTxt=t.mascot;hintImg='explain';
+  showMascot([{img:'smart',text:t.mascot}],()=>{
+    let extra='';
+    if(t.showMorse)extra=morseTbl();
+    if(t.showAtbash)extra=atbashTbl();
+    if(t.showVernam)extra=vernamTbl();
+    const el=document.getElementById('ch-content');
+    el.innerHTML=`<div class="content-card" id="tc"><div class="task-label">Задание</div><p class="task-text">${t.text}</p>${extra}<div style="margin-top:18px"></div><input class="task-input" id="ti" placeholder="Введи ответ..." autocomplete="off" onkeydown="if(event.key==='Enter')checkAns()"/><br/><button class="btn-check" onclick="checkAns()">Проверить</button><div class="feedback" id="fb"></div><button class="btn-next hidden" id="nb" onclick="nextCh()">Далее →</button></div>`;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('tc').classList.add('visible')));
+    document.getElementById('hint-btn').classList.remove('hidden');
+  });
+}
+function checkAns(){
+  const c=CIPHERS[cIdx],ch=c.chapters[chIdx],t=c.tasks[ch.taskIdx];
+  const inp=document.getElementById('ti'),fb=document.getElementById('fb');
+  const v=inp.value.trim().toUpperCase();
+  if(v===t.answer.toUpperCase()){
+    inp.classList.remove('wrong');inp.classList.add('correct');
+    fb.textContent='✓ Правильно!';fb.className='feedback ok';
+    document.getElementById('nb').classList.remove('hidden');
+    markDone(ch.key);
+  }else{
+    inp.classList.remove('correct');inp.classList.add('wrong');
+    fb.textContent='✗ Не совсем. Попробуй ещё раз!';fb.className='feedback err';
+  }
+}
+function markDone(k){if(!done.has(k)){done.add(k);updateProg()}}
+function nextCh(){
+  const c=CIPHERS[cIdx],n=chIdx+1;
+  if(n<c.chapters.length)openCh(cIdx,n);
+  else if(cIdx===CIPHERS.length-1)showFinal();
+  else goMenu();
+}
+function goMenu(){showScr('scr-menu');buildMenu()}
+function showFinal(){
+  showScr('scr-final');confetti();
+  setTimeout(()=>showMascot([
+    {img:'normal',text:'Поздравляю! Ты прошёл весь курс и знаешь как работают пять классических шифров!'},
+    {img:'smart',text:'От простого кода Морзе до абсолютно стойкого шифра Вернама — ты освоил основы криптографии.'},
+    {img:'normal',text:'Спасибо что прошёл этот путь со мной!'}
+  ],null),300);
+}
+function confetti(){
+  const cols=['#E8720C','#F5A623','#30D158','#FF453A','#2997FF','#BF5AF2'];
+  for(let i=0;i<60;i++){
+    const e=document.createElement('div');e.className='confetti';
+    e.style.left=Math.random()*100+'vw';
+    e.style.background=cols[Math.floor(Math.random()*cols.length)];
+    e.style.width=(6+Math.random()*8)+'px';e.style.height=(6+Math.random()*8)+'px';
+    e.style.borderRadius=Math.random()>.5?'50%':'2px';
+    e.style.animationDuration=(2+Math.random()*2)+'s';
+    e.style.animationDelay=Math.random()*1.5+'s';
+    document.body.appendChild(e);setTimeout(()=>e.remove(),5000);
   }
 }
 
-/* ─────────────────────────────────────────
-   ПРОЛОГ
-───────────────────────────────────────── */
-function startPrologue(ci) {
-  const cipher = CIPHERS[ci];
-  const prol   = cipher.prologue;
-  document.getElementById('chapter-content').innerHTML = '';
-
-  showMascot(prol.mascotLines, () => revealPrologue(ci));
+/* ═══ REF TABLES ═══ */
+function morseTbl(){
+  const L='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');let r='';
+  for(let i=0;i<L.length;i+=6){const ch=L.slice(i,i+6);r+='<tr>'+ch.map(l=>`<td><b>${l}</b></td><td>${MORSE[l]}</td>`).join('')+'</tr>'}
+  return`<p class="ref-label">Таблица Морзе:</p><div class="ref-table-wrap"><table class="ref-table"><thead><tr>${[1,2,3,4,5,6].map(()=>'<th>Б</th><th>Код</th>').join('')}</tr></thead><tbody>${r}</tbody></table></div>`;
 }
-
-function revealPrologue(ci) {
-  const prol = CIPHERS[ci].prologue;
-  const cont = document.getElementById('chapter-content');
-  cont.innerHTML = `
-    <div class="content-card" id="prol-card">
-      <h2>${prol.content.title}</h2>
-      ${prol.content.body.map(b => `<p>${b}</p>`).join('')}
-      <div class="history-note">${prol.content.hist}</div>
-      <button class="next-btn" onclick="nextChapter()">Далее →</button>
-    </div>
-  `;
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    document.getElementById('prol-card').classList.add('visible');
-  }));
-}
-
-/* ─────────────────────────────────────────
-   ЗАДАНИЕ
-───────────────────────────────────────── */
-function startTask(ci, taskIdx) {
-  const task = CIPHERS[ci].tasks[taskIdx];
-  document.getElementById('chapter-content').innerHTML = '';
-
-  currentHintText = task.mascot;
-  currentHintImg  = 'explain';
-
-  showMascot([{ img:'smart', text: task.mascot }], () => revealTask(ci, taskIdx));
-}
-
-function revealTask(ci, taskIdx) {
-  const task = CIPHERS[ci].tasks[taskIdx];
-  let extra = '';
-
-  if (task.showMorse) extra = buildMorseTable();
-  if (task.showAtbash) extra = buildAtbashTable();
-  if (task.showVernam) extra = buildVernamTable();
-
-  const cont = document.getElementById('chapter-content');
-  cont.innerHTML = `
-    <div class="content-card" id="task-card">
-      <div class="task-label">Задание</div>
-      <p class="task-text">${task.text}</p>
-      ${extra}
-      <div style="margin-top:18px"></div><input class="task-input" id="task-input" placeholder="Введи ответ..." autocomplete="off"
-             onkeydown="if(event.key==='Enter') checkAnswer()"/>
-      <br/>
-      <button class="check-btn" onclick="checkAnswer()">Проверить</button>
-      <div class="feedback" id="feedback"></div>
-      <button class="next-btn hidden" id="next-btn" onclick="nextChapter()">Далее →</button>
-    </div>
-  `;
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    document.getElementById('task-card').classList.add('visible');
-  }));
-  document.getElementById('mascot-hint-btn').classList.remove('hidden');
-}
-
-function checkAnswer() {
-  const cipher  = CIPHERS[currentCipherIdx];
-  const chapter = cipher.chapters[currentChapterIdx];
-  const task    = cipher.tasks[chapter.taskIdx];
-  const input   = document.getElementById('task-input');
-  const fb      = document.getElementById('feedback');
-  const val     = input.value.trim().toUpperCase();
-
-  if (val === task.answer.toUpperCase()) {
-    input.classList.remove('wrong'); input.classList.add('correct');
-    fb.textContent = '✓ Правильно!'; fb.className = 'feedback ok';
-    document.getElementById('next-btn').classList.remove('hidden');
-  } else {
-    input.classList.remove('correct'); input.classList.add('wrong');
-    fb.textContent = '✗ Не совсем. Попробуй ещё раз!'; fb.className = 'feedback err';
-  }
-}
-
-/* ─────────────────────────────────────────
-   НАВИГАЦИЯ ПО ГЛАВАМ
-───────────────────────────────────────── */
-function nextChapter() {
-  const cipher = CIPHERS[currentCipherIdx];
-  const next   = currentChapterIdx + 1;
-  if (next < cipher.chapters.length) {
-    openChapter(currentCipherIdx, next);
-  } else {
-    // Последняя глава последнего шифра?
-    if (currentCipherIdx === CIPHERS.length - 1) {
-      showFinal();
-    } else {
-      goToMenu();
-    }
-  }
-}
-
-function goToMenu() {
-  showScreen('screen-menu');
-}
-
-function showFinal() {
-  showScreen('screen-final');
-  setTimeout(() => {
-    showMascot([
-      { img:'normal', text:'Поздравляю! Ты прошёл весь курс и теперь знаешь как работают пять классических шифров!' },
-      { img:'smart',  text:'От простого кода Морзе до абсолютно стойкого шифра Вернама — ты освоил основы криптографии.' },
-      { img:'normal', text:'Спасибо что прошёл этот путь со мной. Надеюсь тебе было интересно!' },
-    ], null);
-  }, 300);
-}
-
-/* ─────────────────────────────────────────
-   СПРАВОЧНЫЕ ТАБЛИЦЫ
-───────────────────────────────────────── */
-function buildMorseTable() {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  let rows = '';
-  for (let i = 0; i < letters.length; i += 6) {
-    const chunk = letters.slice(i, i+6);
-    rows += '<tr>' + chunk.map(l => `<td><b>${l}</b></td><td>${MORSE_TABLE[l]}</td>`).join('') + '</tr>';
-  }
-  return `<p style="font-weight:700;margin:14px 0 6px;color:var(--brown)">Таблица Морзе:</p>
-          <div class="ref-table-wrap"><table class="ref-table"><thead><tr>${[1,2,3,4,5,6].map(()=>'<th>Б</th><th>Код</th>').join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-
-function buildAtbashTable() {
-  const az = 'ABCDEFGHIJKLM'.split('');
-  const za = 'ZYXWVUTSRQPON'.split('');
+function atbashTbl(){
+  const az='ABCDEFGHIJKLM'.split(''),za='ZYXWVUTSRQPON'.split('');
   let r1='',r2='',r3='',r4='';
-  az.forEach((l,i)=>{ r1+=`<td>${l}</td>`; r2+=`<td>${za[i]}</td>`; });
-  'NOPQRSTUVWXYZ'.split('').forEach((l,i)=>{ r3+=`<td>${l}</td>`; r4+=`<td>${'MLKJIHGFEDCBA'.split('')[i]}</td>`; });
-  return `<p style="font-weight:700;margin:14px 0 6px;color:var(--brown)">Таблица Атбаш:</p>
-          <div class="ref-table-wrap"><table class="ref-table"><tbody><tr>${r1}</tr><tr>${r2}</tr><tr>${r3}</tr><tr>${r4}</tr></tbody></table></div>`;
+  az.forEach((l,i)=>{r1+=`<td>${l}</td>`;r2+=`<td>${za[i]}</td>`});
+  'NOPQRSTUVWXYZ'.split('').forEach((l,i)=>{r3+=`<td>${l}</td>`;r4+=`<td>${'MLKJIHGFEDCBA'.split('')[i]}</td>`});
+  return`<p class="ref-label">Таблица Атбаш:</p><div class="ref-table-wrap"><table class="ref-table"><tbody><tr>${r1}</tr><tr>${r2}</tr><tr>${r3}</tr><tr>${r4}</tr></tbody></table></div>`;
 }
-
-function buildVernamTable() {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  let r1='',r2='';
-  letters.slice(0,13).forEach((l,i)=>{ r1+=`<td>${l}=${i}</td>`; });
-  letters.slice(13).forEach((l,i)=>{ r2+=`<td>${l}=${i+13}</td>`; });
-  return `<p style="font-weight:700;margin:14px 0 6px;color:var(--brown)">Таблица букв и чисел:</p>
-          <div class="ref-table-wrap"><table class="ref-table"><tbody><tr>${r1}</tr><tr>${r2}</tr></tbody></table></div>`;
+function vernamTbl(){
+  const L='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');let r1='',r2='';
+  L.slice(0,13).forEach((l,i)=>{r1+=`<td>${l}=${i}</td>`});
+  L.slice(13).forEach((l,i)=>{r2+=`<td>${l}=${i+13}</td>`});
+  return`<p class="ref-label">Таблица букв и чисел:</p><div class="ref-table-wrap"><table class="ref-table"><tbody><tr>${r1}</tr><tr>${r2}</tr></tbody></table></div>`;
 }
 </script>
 </body>
